@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+
+const { transpile } = require('.')
+const minimist = require('minimist')
+
+const { input, output } = minimist(process.argv.slice(2), {
+  string: ['input', 'output'],
+  alias: {
+    in: 'input',
+    out: 'output',
+  },
+  default: {
+    input: process.cwd(),
+    output: `${process.cwd()}/out`,
+  }
+});
+
+transpile(input, output).then(() => {
+  console.log()
+  console.log(`Transpilation to ${output} has been complete`)
+  console.log()
+})
+.catch(() => {
+  console.log()
+  console.log('Transpilation has been failed. Error:')
+  console.log()
+  console.log(e.stack)
+  console.log()
+})

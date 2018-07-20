@@ -1,4 +1,4 @@
-import uglify from 'uglify'
+import uglify from 'uglify-js'
 import { fs } from '../libs'
 import { Internal, escapeBrackets, freeText } from '../utils'
 import Generator from './base'
@@ -21,6 +21,8 @@ class InitGenerator extends Generator {
     const scripts = this.scripts
 
     return freeText `
+      require('./views')
+
       const Appfairy = require('appfairy')
 
       const scripts = {

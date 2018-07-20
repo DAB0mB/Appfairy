@@ -8,7 +8,7 @@ module.exports = {
   ],
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'index.js',
+    filename: 'appfairy-webflow-transpiler.js',
     library: '',
     libraryTarget: 'commonjs2'
   },

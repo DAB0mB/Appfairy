@@ -37,7 +37,7 @@ class ViewGenerator extends Generator {
 
     Object.assign(this[_], {
       className: splitWords(name).map(upperFirst).join(''),
-      elName: 'af-' + splitWords(name).map(word => word.toLowerCase()).join(''),
+      elName: splitWords(name).map(word => word.toLowerCase()).join('-'),
       name:  splitWords(name).map(word => word.toLowerCase()).join('_'),
     })
   }
