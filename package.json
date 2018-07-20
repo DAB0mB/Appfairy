@@ -1,0 +1,30 @@
+{
+  "name": "appfairy-webflow-transpiler",
+  "version": "0.1.0",
+  "description": "An executable which will transpile Webflow assets into Appfairy elements",
+  "main": "build",
+  "scripts": {
+    "build": "webpack --config webpack_config.js",
+    "prepublish": "npm run build"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "clean-css": "^4.1.11",
+    "html-minifier": "^3.5.19",
+    "rimraf": "^2.6.2",
+    "uglify": "^0.1.5"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.6",
+    "babel-loader": "^7.1.5",
+    "babel-plugin-transform-decorators-legacy": "^1.3.5",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-es2017": "^6.24.1",
+    "eslint": "^5.1.0",
+    "eslint-loader": "^2.1.0",
+    "webpack": "^4.16.1",
+    "webpack-cli": "^3.1.0",
+    "webpack-node-externals": "^1.7.2"
+  }
+}

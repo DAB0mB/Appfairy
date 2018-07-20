@@ -6,7 +6,7 @@ import { ViewGenerator, InitGenerator } from './generators'
 import { fs } from './libs'
 import { emptyDir } from './utils'
 
-const transpile = async (inputDir, outputDir) => {
+export const transpile = async (inputDir, outputDir) => {
   let files
 
   await Promise.all([

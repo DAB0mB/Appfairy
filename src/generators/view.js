@@ -2,7 +2,7 @@ import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
 import { fs } from '../libs'
 import { Internal, escapeBrackets, emptyDir, splitWords, upperFirst } from '../utils'
-import Generator from './generator'
+import Generator from './base'
 
 const _ = Symbol('_ViewGenerator')
 const cleanCSS = new CleanCSS()
@@ -109,3 +109,5 @@ class ViewGenerator extends Generator {
     return fs.writeFile(`${dir}/${this.name}.js`, this.generate())
   }
 }
+
+export default ViewGenerator
