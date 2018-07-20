@@ -1,5 +1,5 @@
 import cheerio from 'cheerio'
-import ncp from 'ncpm'
+import { ncp } from 'ncp'
 import path from 'path'
 import { promisify } from 'util'
 import { ViewGenerator, InitGenerator } from './generators'

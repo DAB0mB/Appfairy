@@ -2,14 +2,14 @@ import rimraf from 'rimraf'
 import { promisify } from 'util'
 import { fs } from '../libs'
 
-export { default as Internalized } from './internalized'
+export { default as Internal } from './internal'
 
 // Ensure dir exists and is empty
 export const emptyDir = async (dir) => {
   try {
     await promisify(rimraf)(dir)
   }
-  finally (e) {
+  finally {
     return fs.mkdir(dir)
   }
 }
