@@ -1,11 +1,35 @@
 import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
-import { splitWords, upperFirst } from '../utils'
-import Generator, { _ } from './generator'
+import { fs } from '../libs'
+import { Internal, escapeBrackets, emptyDir, splitWords, upperFirst } from '../utils'
+import Generator from './generator'
 
+const _ = Symbol('_ViewGenerator')
 const cleanCSS = new CleanCSS()
 
+@Internal(_)
 class ViewGenerator extends Generator {
+  static async saveAll(viewGenerators, dir) {
+    dir += '/views'
+
+    await emptyDir(dir)
+
+    const savingViews = viewGenerators.map((viewGenerator) => {
+      viewGenerator.save(dir)
+    })
+
+    const index = viewGenerators.map((viewGenerator) => {
+      return `import './${viewGenerator.name}.js'`
+    }).join('\n')
+
+    const savingIndex = fs.writeFile(`${dir}/index.js`, index)
+
+    return Promise.all([
+      ...savingViews,
+      savingIndex,
+    ])
+  }
+
   set name(name) {
     if (typeof name != 'string') {
       throw TypeError('ViewGenerator.name must be a string')
@@ -67,11 +91,11 @@ class ViewGenerator extends Generator {
 
       class ${this.className} extends Appfairy.View {
         initializeStyle(style) {
-          style.innerHTML = '${this.css.replace(/'/g, "\\'")}'
+          style.innerHTML = '${escapeBrackets(this.css)}'
         }
 
         initializeView(view) {
-          view.innerHTML = '${this.html.replace(/'/g, "\\'")}'
+          view.innerHTML = '${escapeBrackets(this.html)}'
         }
       }
 
@@ -79,5 +103,9 @@ class ViewGenerator extends Generator {
 
       module.exports = ${this.className}
     `
+  }
+
+  save(dir) {
+    return fs.writeFile(`${dir}/${this.name}.js`, this.generate())
   }
 }

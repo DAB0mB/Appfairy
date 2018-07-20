@@ -1,3 +1,27 @@
+import rimraf from 'rimraf'
+import { promisify } from 'util'
+import { fs } from '../libs'
+
+export { default as Internalized } from './internalized'
+
+// Ensure dir exists and is empty
+export const emptyDir = async (dir) => {
+  try {
+    await promisify(rimraf)(dir)
+  }
+  finally (e) {
+    return fs.mkdir(dir)
+  }
+}
+
+// Useful for nested strings that should be evaluated
+export const escapeBrackets = (str) => {
+  return str
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"')
+    .replace(/`/g, '\\`')
+}
+
 // Will use the shortest indention as an axis
 export const freeText = (text) => {
   const lines = text
@@ -16,7 +40,10 @@ export const freeText = (text) => {
 
   // This will allow inline text generation with external functions, same as ctrl+shift+c
   // As long as we surround the inline text with -->text<--
-  return indentFixedText.replace(/( *)-->((?:.|\n)*)<--/g, (match, baseIndent, content) => {
+  return indentFixedText.replace(
+    /( *)-->((?:.|\n)*)<--/g,
+    (match, baseIndent, content) =>
+  {
     return content
       .split('\n')
       .map(line => `${baseIndent}${line}`)

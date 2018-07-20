@@ -1,7 +1,11 @@
 import uglify from 'uglify'
-import { freeText } from '../utils'
-import Generator, { _ } from './base'
+import { fs } from '../libs'
+import { Internal, escapeBrackets, freeText } from '../utils'
+import Generator from './base'
 
+const _ = Symbol('_InitGenerator')
+
+@Internal(_)
 class InitGenerator extends Generator {
   get scripts() {
     return { ...this[_].scripts }
@@ -10,9 +14,7 @@ class InitGenerator extends Generator {
   constructor() {
     super()
 
-    Object.assign(this[_], {
-      scripts: []
-    })
+    this[_].scripts = []
   }
 
   generate() {
@@ -22,7 +24,7 @@ class InitGenerator extends Generator {
       const Appfairy = require('appfairy')
 
       const scripts = {
-        -->${this.joinScripts()}<--
+        -->${this[_].joinScripts()}<--
       }
 
       const loadingPromises = Object.keys(scripts).map((src) => {
@@ -46,28 +48,30 @@ class InitGenerator extends Generator {
     `
   }
 
+  save(dir) {
+    return fs.writeFile(`${dir}/index.js`, this.generate())
+  }
+
   setScript(src, script) {
-    if (src == null) {
-      this[_].scripts.push(minify(script))
-    }
-    else {
+    if (src) {
       this[_].scripts[src] = true
     }
+    else {
+      this[_].scripts.push(uglify.minify(script).code)
+    }
   }
-}
 
-Object.assign(InitGenerator.prototype[_], {
-  joinScripts() {
+  _joinScripts() {
     return Object.keys(this.scripts).map((src) => {
       let script = this[_].scripts[src]
 
       if (script !== true) {
-        script = "'" + uglify.minify(script).code.replace(/'/g, "\\'") + "'"
+        script = "'" + escapeBrackets(script) + "'"
       }
 
       return `'${src}': ${script},`
     }).join('\n')
-  },
-})
+  }
+}
 
 export default InitGenerator
