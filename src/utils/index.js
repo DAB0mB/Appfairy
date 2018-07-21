@@ -9,7 +9,7 @@ export const emptyDir = async (dir) => {
   try {
     await promisify(rimraf)(dir)
   }
-  finally {
+  catch (e) {
     return fs.mkdir(dir)
   }
 }

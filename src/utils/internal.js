@@ -1,5 +1,5 @@
-const Internal = (accessor) => {
-  if (typeof accessor != 'symbol') {
+const Internal = (_) => {
+  if (typeof _ != 'symbol') {
     throw TypeError('Accessor must me a symbol')
   }
 
@@ -31,7 +31,7 @@ const Internal = (accessor) => {
       },
     })
 
-    Object.keys(Klass.prototype).forEach((k) => {
+    Object.keys(Klass.prototype).forEach((key) => {
       if (key[0] != '_') return
 
       const val = Klass.prototype[key]
@@ -40,7 +40,7 @@ const Internal = (accessor) => {
 
       const publicKey = key.slice(1)
       internals[publicKey] = val
-      delete Klass.prototype[k]
+      delete Klass.prototype[key]
     })
   }
 }

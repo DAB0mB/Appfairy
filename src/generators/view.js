@@ -2,8 +2,16 @@ import cheerio from 'cheerio'
 import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
 import { fs } from '../libs'
-import { Internal, escapeBrackets, emptyDir, splitWords, upperFirst } from '../utils'
 import Generator from './base'
+
+import {
+  Internal,
+  escapeBrackets,
+  emptyDir,
+  freeText,
+  splitWords,
+  upperFirst,
+} from '../utils'
 
 const _ = Symbol('_ViewGenerator')
 const cleanCSS = new CleanCSS()
@@ -60,16 +68,17 @@ class ViewGenerator extends Generator {
   }
 
   set html(html) {
-    $ = cheerio.load(html)
+    const $ = cheerio.load(html)
 
     this[_].children = $('> [af-el]').map((i, el) => {
       const $el = $(el)
+      const elName = $el.attr('af-el')
 
-      $(`<af-${view.elName}><af-${view.elName} />`).insertAfter($el)
+      $(`<af-${elName}><af-${elName} />`).insertAfter($el)
       $el.remove()
 
       return new ViewGenerator({
-        name: $el.attr('af-el'),
+        name: elName,
         html: $.html(el),
         css: this.css,
       })

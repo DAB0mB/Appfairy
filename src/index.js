@@ -10,7 +10,7 @@ export const transpile = async (inputDir, outputDir) => {
   let files
 
   await Promise.all([
-    fs.readdir(dir).then(result => files = result),
+    fs.readdir(inputDir).then(result => files = result),
     emptyDir(outputDir),
   ])
 
@@ -83,16 +83,20 @@ const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
 
 const setInitScripts = async (initGenerator, $head) => {
   const $scripts = $head.find('script[type="text/javascript"]')
-  const src = $scripts.attr('src')
 
-  initGenerator.setScript(src, $script.html())
+  $scripts.each((i, script) => {
+    const $script = $head.find(script)
+
+    initGenerator.setScript($script.attr('src'), $script.html())
+  })
 }
 
 const appendCSSSheets = async (viewGenerator, $head) => {
   const $links = $head.find('link[rel="stylesheet"][type="text/css"]')
-  const hrefs = links.map(link => link.attr('href'))
 
-  hrefs.forEach((href) => {
+  $links.each((i, link) => {
+    const href = $head.find(link).attr('href')
+
     viewGenerator.appendCSS(`@import "${href}";`)
   })
 }

@@ -18,8 +18,6 @@ class InitGenerator extends Generator {
   }
 
   generate() {
-    const scripts = this.scripts
-
     return freeText `
       require('./views')
 

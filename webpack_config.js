@@ -3,6 +3,7 @@ const webpack = require('webpack')
 const nodeExternals = require('webpack-node-externals')
 
 module.exports = {
+  devtool: 'sourcemap',
   entry: [
     path.resolve(__dirname, 'src')
   ],
@@ -30,5 +31,12 @@ module.exports = {
       }
     ]
   },
+  plugins: [
+    new webpack.BannerPlugin({
+      banner: 'require("source-map-support").install();',
+      entryOnly: false,
+      raw: true
+    })
+  ],
   externals: [nodeExternals()]
 }
