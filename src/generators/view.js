@@ -1,3 +1,4 @@
+import cheerio from 'cheerio'
 import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
 import { fs } from '../libs'
@@ -30,6 +31,10 @@ class ViewGenerator extends Generator {
     ])
   }
 
+  get children() {
+    return this[_].chidlren.slice()
+  }
+
   set name(name) {
     if (typeof name != 'string') {
       throw TypeError('ViewGenerator.name must be a string')
@@ -55,6 +60,21 @@ class ViewGenerator extends Generator {
   }
 
   set html(html) {
+    $ = cheerio.load(html)
+
+    this[_].children = $('> [af-el]').map((i, el) => {
+      const $el = $(el)
+
+      $(`<af-${view.elName}><af-${view.elName} />`).insertAfter($el)
+      $el.remove()
+
+      return new ViewGenerator({
+        name: $el.attr('af-el'),
+        html: $.html(el),
+        css: this.css,
+      })
+    }).toArray()
+
     // Will validate as well
     this[_].html = htmlMinifier.minify(html)
   }
@@ -75,6 +95,7 @@ class ViewGenerator extends Generator {
   constructor(props) {
     super()
 
+    this[_].children = []
     this.name = props.name
     this.css = props.css
     this.html = props.html
@@ -106,7 +127,16 @@ class ViewGenerator extends Generator {
   }
 
   save(dir) {
-    return fs.writeFile(`${dir}/${this.name}.js`, this.generate())
+    const savingChildren = this[_].children.map((child) => {
+      return child.save()
+    })
+
+    const savingSelf = fs.writeFile(`${dir}/${this.name}.js`, this.generate())
+
+    return Promise.all([
+      ...savingChildren,
+      savingSelf,
+    ])
   }
 }
 
