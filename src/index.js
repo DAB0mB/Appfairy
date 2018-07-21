@@ -59,7 +59,9 @@ const transpileHTMLFile = async (
   const $head = $('head')
   const $body = $('body')
 
-  const viewGenerator = new ViewGenerator({ name: htmlFile })
+  const viewGenerator = new ViewGenerator({
+    name: htmlFile.split('.').slice(0, -1).join('.')
+  })
 
   setInitScripts(initGenerator, $head)
   appendCSSSheets(viewGenerator, $head)

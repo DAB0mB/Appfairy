@@ -44,10 +44,12 @@ class ViewGenerator extends Generator {
   }
 
   set name(name) {
+    const words = splitWords(name)
+
     Object.assign(this[_], {
-      className: splitWords(name).map(upperFirst).join(''),
-      elName: splitWords(name).map(word => word.toLowerCase()).join('-'),
-      name:  splitWords(name).map(word => word.toLowerCase()).join('_'),
+      className: words.concat('view').map(upperFirst).join(''),
+      elName: words.map(word => word.toLowerCase()).join('-'),
+      name:  words.concat('view').map(word => word.toLowerCase()).join('_'),
     })
   }
 
@@ -74,7 +76,7 @@ class ViewGenerator extends Generator {
     this[_].children = $('> [af-el]').map((i, el) => {
       const $el = $(el)
       const elName = $el.attr('af-el')
-      const $afEl = $(`<af-${elName}><af-${elName} />`)
+      const $afEl = $(`<af-${elName}></af-${elName}>`)
 
       $el.removeAttr('af-el')
       $afEl.insertAfter($el)
