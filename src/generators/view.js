@@ -74,13 +74,21 @@ class ViewGenerator extends Generator {
     this[_].children = $('> [af-el]').map((i, el) => {
       const $el = $(el)
       const elName = $el.attr('af-el')
+      const $afEl = $(`<af-${elName}><af-${elName} />`)
 
-      $(`<af-${elName}><af-${elName} />`).insertAfter($el)
+      $el.removeAttr('af-el')
+      $afEl.insertAfter($el)
       $el.remove()
+
+      Object.keys($el.attr()).forEach((attrName) => {
+        const attrValue = $el.attr(attrName)
+
+        $afEl.attr(attrName, attrValue)
+      })
 
       return new ViewGenerator({
         name: elName,
-        html: $.html(el),
+        html: $el.html(),
         css: this.css,
       })
     }).toArray()
