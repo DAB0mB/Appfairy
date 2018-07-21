@@ -9,6 +9,8 @@ import { emptyDir } from './utils'
 export const transpile = async (inputDir, outputDir) => {
   let files
 
+  await emptyDir(outputDir)
+
   await Promise.all([
     fs.readdir(inputDir).then(result => files = result),
     emptyDir(outputDir),
@@ -71,7 +73,10 @@ const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
 
   await emptyDir(publicDir)
 
-  const makingPublicSubDirs = publicSubDirs.map((publicSubDir) => {
+  const makingPublicSubDirs = publicSubDirs.filter((publicSubDir) => {
+    return ['css', 'fonts', 'images', 'js'].includes(publicSubDir)
+  })
+  .map((publicSubDir) => {
     return promisify(ncp)(
       `${inputDir}/${publicSubDir}`,
       `${publicDir}/${publicSubDir}`,

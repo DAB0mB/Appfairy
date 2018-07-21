@@ -18,7 +18,7 @@ class InitGenerator extends Generator {
   }
 
   generate() {
-    return freeText `
+    return freeText(`
       require('./views')
 
       const Appfairy = require('appfairy')
@@ -45,7 +45,7 @@ class InitGenerator extends Generator {
       })
 
       module.exports = Appfairy.loading = Promise.all(loadingPromises)
-    `
+    `)
   }
 
   save(dir) {

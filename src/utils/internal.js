@@ -12,34 +12,33 @@ const Internal = (_) => {
 
     Object.defineProperty(Klass.prototype, _, {
       get() {
-        return this[_] = internals
-      },
-      set(internals) {
-        internals = { ...internals }
+        const _this = { ...internals }
 
-        Object.keys(internals).forEach((key) => {
-          const val = internals[key]
+        Object.keys(_this).forEach((key) => {
+          const value = _this[key]
 
-          if (typeof val == 'function') {
-            internals[key] = val.bind(this)
+          if (typeof value == 'function') {
+            _this[key] = value.bind(this)
           }
         })
 
         Object.defineProperty(this, _, {
-          value: internals,
+          value: _this
         })
-      },
+
+        return _this
+      }
     })
 
-    Object.keys(Klass.prototype).forEach((key) => {
+    Object.getOwnPropertyNames(Klass.prototype).forEach((key) => {
       if (key[0] != '_') return
 
-      const val = Klass.prototype[key]
+      const { value } = Object.getOwnPropertyDescriptor(Klass.prototype, key)
 
-      if (typeof val != 'function') return
+      if (typeof value != 'function') return
 
       const publicKey = key.slice(1)
-      internals[publicKey] = val
+      internals[publicKey] = value
       delete Klass.prototype[key]
     })
   }

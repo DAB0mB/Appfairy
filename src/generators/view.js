@@ -14,7 +14,7 @@ import {
 } from '../utils'
 
 const _ = Symbol('_ViewGenerator')
-const cleanCSS = new CleanCSS()
+const cleanCSS = new CleanCSS({ inline: false })
 
 @Internal(_)
 class ViewGenerator extends Generator {
@@ -24,11 +24,11 @@ class ViewGenerator extends Generator {
     await emptyDir(dir)
 
     const savingViews = viewGenerators.map((viewGenerator) => {
-      viewGenerator.save(dir)
+      return viewGenerator.save(dir)
     })
 
     const index = viewGenerators.map((viewGenerator) => {
-      return `import './${viewGenerator.name}.js'`
+      return `require('./${viewGenerator.name}.js')`
     }).join('\n')
 
     const savingIndex = fs.writeFile(`${dir}/index.js`, index)
@@ -44,10 +44,6 @@ class ViewGenerator extends Generator {
   }
 
   set name(name) {
-    if (typeof name != 'string') {
-      throw TypeError('ViewGenerator.name must be a string')
-    }
-
     Object.assign(this[_], {
       className: splitWords(name).map(upperFirst).join(''),
       elName: splitWords(name).map(word => word.toLowerCase()).join('-'),
@@ -68,6 +64,11 @@ class ViewGenerator extends Generator {
   }
 
   set html(html) {
+    if (!html) {
+      this[_].html = ''
+      return
+    }
+
     const $ = cheerio.load(html)
 
     this[_].children = $('> [af-el]').map((i, el) => {
@@ -85,7 +86,12 @@ class ViewGenerator extends Generator {
     }).toArray()
 
     // Will validate as well
-    this[_].html = htmlMinifier.minify(html)
+    this[_].html = htmlMinifier.minify(html, {
+      minifyCSS: true,
+      minifyJS: true,
+      minifyURLs: true,
+      collapseWhitespace: true,
+    })
   }
 
   get html() {
@@ -94,7 +100,7 @@ class ViewGenerator extends Generator {
 
   set css(css) {
     // Will validate as well
-    this[_].css = cleanCSS.minify(css)
+    this[_].css = css ? cleanCSS.minify(css).styles : ''
   }
 
   get css() {
@@ -112,11 +118,11 @@ class ViewGenerator extends Generator {
 
   // Unlike the setter, this will only minify the appended CSS
   appendCSS(css) {
-    this[_].css += cleanCSS.minify(css)
+    this[_].css += cleanCSS.minify(css).styles
   }
 
   generate() {
-    return freeText `
+    return freeText(`
       const Appfairy = require('appfairy')
 
       class ${this.className} extends Appfairy.View {
@@ -132,7 +138,7 @@ class ViewGenerator extends Generator {
       Appfairy.View.define('${this.elName}', ${this.className})
 
       module.exports = ${this.className}
-    `
+    `)
   }
 
   save(dir) {

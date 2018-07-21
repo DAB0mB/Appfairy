@@ -6,12 +6,9 @@ export { default as Internal } from './internal'
 
 // Ensure dir exists and is empty
 export const emptyDir = async (dir) => {
-  try {
-    await promisify(rimraf)(dir)
-  }
-  catch (e) {
-    return fs.mkdir(dir)
-  }
+  await promisify(rimraf)(dir)
+
+  return fs.mkdir(dir)
 }
 
 // Useful for nested strings that should be evaluated
@@ -24,23 +21,13 @@ export const escapeBrackets = (str) => {
 
 // Will use the shortest indention as an axis
 export const freeText = (text) => {
-  const lines = text
-    .split('\n')
-    .filter(line => line.trim())
-
-  const minIndent = lines.reduce((minIndent, line) => {
-    const currIndent = line.match(/^ */)[0].length
-
-    return currIndent < minIndent ? currIndent : minIndent
-  }, Infinity)
-
-  const indentFixedText = lines
-    .map(line => line.slice(minIndent))
-    .join('\n')
+  if (text instanceof Array) {
+    text = text.join('')
+  }
 
   // This will allow inline text generation with external functions, same as ctrl+shift+c
   // As long as we surround the inline text with -->text<--
-  return indentFixedText.replace(
+  text = text.replace(
     /( *)-->((?:.|\n)*)<--/g,
     (match, baseIndent, content) =>
   {
@@ -49,6 +36,19 @@ export const freeText = (text) => {
       .map(line => `${baseIndent}${line}`)
       .join('\n')
   })
+
+  const lines = text.split('\n')
+
+  const minIndent = lines.filter(line => line.trim()).reduce((minIndent, line) => {
+    const currIndent = line.match(/^ */)[0].length
+
+    return currIndent < minIndent ? currIndent : minIndent
+  }, Infinity)
+
+  return lines
+    .map(line => line.slice(minIndent))
+    .join('\n')
+    .trim()
 }
 
 // upper -> Upper

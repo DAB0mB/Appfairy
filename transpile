@@ -20,9 +20,9 @@ transpile(input, output).then(() => {
   console.log(`Transpilation to ${output} has been complete`)
   console.log()
 })
-.catch(() => {
+.catch((e) => {
   console.log()
-  console.log('Transpilation has been failed. Error:')
+  console.log('Transpilation has failed. Error:')
   console.log()
   console.log(e.stack)
   console.log()
