@@ -9,14 +9,12 @@ import { emptyDir, freeText } from './utils'
 export const transpile = async (inputDir, outputDir, options = {}) => {
   let files
 
-  await emptyDir(outputDir)
-
   await Promise.all([
     fs.readdir(inputDir).then(result => files = result),
-    emptyDir(outputDir),
+    emptyDir(outputDir).then(() => fs.mkdir(`${outputDir}/src`)),
   ])
 
-  const writingIndex = fs.writeFile(`${outputDir}/index.js`, freeText(`
+  const writingIndex = fs.writeFile(`${outputDir}/src/index.js`, freeText(`
     require('./views')
     require('./scripts')
   `))

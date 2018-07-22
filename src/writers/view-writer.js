@@ -19,7 +19,7 @@ const cleanCSS = new CleanCSS({ inline: false })
 @Internal(_)
 class ViewWriter extends Writer {
   static async writeAll(viewWriters, dir) {
-    dir += '/views'
+    dir += '/src/views'
 
     await emptyDir(dir)
 

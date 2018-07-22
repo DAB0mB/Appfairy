@@ -33,10 +33,10 @@ class ScriptWriter extends Writer {
       prefetch: this.prefetch,
     }
 
-    await emptyDir(`${dir}/scripts`)
+    await emptyDir(`${dir}/src/scripts`)
 
     if (!options.prefetch) {
-      return fs.writeFile(`${dir}/scripts/index.js`, this[_].composeScriptLoader())
+      return fs.writeFile(`${dir}/src/scripts/index.js`, this[_].composeScriptLoader())
     }
 
     const scriptFileNames = this.scripts.map((script, index, { length }) => {
@@ -52,7 +52,7 @@ class ScriptWriter extends Writer {
 
       code = `/* eslint-disable */\n${code}\n/* eslint-enable */`
 
-      return fs.writeFile(`${dir}/scripts/${scriptFileName}`, code)
+      return fs.writeFile(`${dir}/src/scripts/${scriptFileName}`, code)
     })
 
     const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
@@ -60,7 +60,7 @@ class ScriptWriter extends Writer {
     }).join('\n')
 
     const writingIndex = fs.writeFile(
-      `${dir}/scripts/index.js`,
+      `${dir}/src/scripts/index.js`,
       scriptsIndexContent,
     )
 
