@@ -6,7 +6,7 @@ import { ViewGenerator, InitGenerator } from './generators'
 import { fs } from './libs'
 import { emptyDir } from './utils'
 
-export const transpile = async (inputDir, outputDir) => {
+export const transpile = async (inputDir, outputDir, options = {}) => {
   let files
 
   await emptyDir(outputDir)
@@ -18,7 +18,10 @@ export const transpile = async (inputDir, outputDir) => {
 
   const htmlFiles = files.filter(file => path.extname(file) == '.html')
   const publicSubDirs = files.filter(file => !htmlFiles.includes(file))
-  const initGenerator = new InitGenerator()
+
+  const initGenerator = new InitGenerator({
+    prefetch: options.prefetch
+  })
 
   const transpilingHTMLFiles = htmlFiles.map((htmlFile) => {
     return transpileHTMLFile(

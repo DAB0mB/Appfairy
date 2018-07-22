@@ -62,3 +62,11 @@ export const splitWords = (str) => {
     .replace(/[A-Z]/, ' $&')
     .split(/[^a-zA-Z0-9]+/)
 }
+
+// abc 5 0 -> 00abc
+export const padLeft = (str, length, char = ' ') => {
+  str = String(str)
+  length = parseInt(length + 1 - str.length)
+
+  return Array(length).join(char) + str
+}
