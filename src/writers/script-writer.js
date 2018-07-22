@@ -2,12 +2,12 @@ import fetch from 'node-fetch'
 import uglify from 'uglify-js'
 import { fs } from '../libs'
 import { Internal, emptyDir, escapeBrackets, freeText, padLeft } from '../utils'
-import Generator from './base'
+import Writer from './writer'
 
-const _ = Symbol('_InitGenerator')
+const _ = Symbol('_ScriptWriter')
 
 @Internal(_)
-class InitGenerator extends Generator {
+class ScriptWriter extends Writer {
   get scripts() {
     return this[_].scripts.slice()
   }
@@ -27,54 +27,14 @@ class InitGenerator extends Generator {
     this.prefetch = options.prefetch
   }
 
-  generate() {
-    const scripts = this[_].scripts.map((script) => {
-      return freeText(`
-        {
-          type: '${script.type}',
-          body: '${escapeBrackets(script.body)}',
-        },
-      `)
-    }).join('\n')
-
-    return freeText(`
-      require('./views')
-
-      const Appfairy = require('appfairy')
-
-      const scripts = [
-        -->${scripts}<--
-      ]
-
-      const loadingPromises = scripts.map((script) => {
-        const scriptEl = document.createElement('script')
-        scriptEl.setAttribute('type', 'text/javascript')
-
-        if (script.type == 'src') {
-          scriptEl.src = script.body
-        }
-        else {
-          scriptEl.innerHTML = script.body
-        }
-
-        return new Promise((resolve, reject) => {
-          script.onload = resolve
-          script.onerror = reject
-        })
-      })
-
-      module.exports = Appfairy.loading = Promise.all(loadingPromises)
-    `)
-  }
-
-  async save(dir, options) {
+  async write(dir, options) {
     options = {
       ...options,
       prefetch: this.prefetch,
     }
 
     if (!options.prefetch) {
-      return fs.writeFile(`${dir}/index.js`, this.generate())
+      return fs.writeFile(`${dir}/index.js`, this[_].compose())
     }
 
     await emptyDir(`${dir}/scripts`)
@@ -137,6 +97,46 @@ class InitGenerator extends Generator {
       this[_].scripts.push({ type, body })
     }
   }
+
+  _compose() {
+    const scripts = this[_].scripts.map((script) => {
+      return freeText(`
+        {
+          type: '${script.type}',
+          body: '${escapeBrackets(script.body)}',
+        },
+      `)
+    }).join('\n')
+
+    return freeText(`
+      require('./views')
+
+      const Appfairy = require('appfairy')
+
+      const scripts = [
+        -->${scripts}<--
+      ]
+
+      const loadingPromises = scripts.map((script) => {
+        const scriptEl = document.createElement('script')
+        scriptEl.setAttribute('type', 'text/javascript')
+
+        if (script.type == 'src') {
+          scriptEl.src = script.body
+        }
+        else {
+          scriptEl.innerHTML = script.body
+        }
+
+        return new Promise((resolve, reject) => {
+          script.onload = resolve
+          script.onerror = reject
+        })
+      })
+
+      module.exports = Appfairy.loading = Promise.all(loadingPromises)
+    `)
+  }
 }
 
-export default InitGenerator
+export default ScriptWriter

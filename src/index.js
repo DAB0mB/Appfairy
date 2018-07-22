@@ -2,7 +2,7 @@ import cheerio from 'cheerio'
 import { ncp } from 'ncp'
 import path from 'path'
 import { promisify } from 'util'
-import { ViewGenerator, InitGenerator } from './generators'
+import { ViewWriter, ScriptWriter } from './writers'
 import { fs } from './libs'
 import { emptyDir } from './utils'
 
@@ -19,7 +19,7 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
   const htmlFiles = files.filter(file => path.extname(file) == '.html')
   const publicSubDirs = files.filter(file => !htmlFiles.includes(file))
 
-  const initGenerator = new InitGenerator({
+  const initWriter = new ScriptWriter({
     prefetch: options.prefetch
   })
 
@@ -28,14 +28,14 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
       inputDir,
       outputDir,
       htmlFile,
-      initGenerator,
+      initWriter,
     )
   })
 
-  const savingFiles = Promise.all(transpilingHTMLFiles).then((viewGenerators) => {
+  const writingFiles = Promise.all(transpilingHTMLFiles).then((viewWriters) => {
     return Promise.all([
-      ViewGenerator.saveAll(viewGenerators, outputDir),
-      initGenerator.save(outputDir),
+      ViewWriter.writeAll(viewWriters, outputDir),
+      initWriter.write(outputDir),
     ])
   })
 
@@ -46,7 +46,7 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
   )
 
   return Promise.all([
-    savingFiles,
+    writingFiles,
     makingPublicDir,
   ])
 }
@@ -55,22 +55,22 @@ const transpileHTMLFile = async (
   inputDir,
   outputDir,
   htmlFile,
-  initGenerator,
+  initWriter,
 ) => {
   const html = (await fs.readFile(`${inputDir}/${htmlFile}`)).toString()
   const $ = cheerio.load(html, { xmlMode: true })
   const $head = $('head')
   const $body = $('body')
 
-  const viewGenerator = new ViewGenerator({
+  const viewWriter = new ViewWriter({
     name: htmlFile.split('.').slice(0, -1).join('.')
   })
 
-  setInitScripts(initGenerator, $head)
-  appendCSSSheets(viewGenerator, $head)
-  setHTML(viewGenerator, $body)
+  setScripts(initWriter, $head)
+  appendCSSSheets(viewWriter, $head)
+  setHTML(viewWriter, $body)
 
-  return viewGenerator
+  return viewWriter
 }
 
 const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
@@ -91,26 +91,26 @@ const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
   return Promise.all(makingPublicSubDirs)
 }
 
-const setInitScripts = async (initGenerator, $head) => {
+const setScripts = async (initWriter, $head) => {
   const $scripts = $head.find('script[type="text/javascript"]')
 
   $scripts.each((i, script) => {
     const $script = $head.find(script)
 
-    initGenerator.setScript($script.attr('src'), $script.html())
+    initWriter.setScript($script.attr('src'), $script.html())
   })
 }
 
-const appendCSSSheets = async (viewGenerator, $head) => {
+const appendCSSSheets = async (viewWriter, $head) => {
   const $links = $head.find('link[rel="stylesheet"][type="text/css"]')
 
   $links.each((i, link) => {
     const href = $head.find(link).attr('href')
 
-    viewGenerator.appendCSS(`@import "${href}";`)
+    viewWriter.appendCSS(`@import "${href}";`)
   })
 }
 
-const setHTML = (viewGenerator, $body) => {
-  viewGenerator.html = $body.html()
+const setHTML = (viewWriter, $body) => {
+  viewWriter.html = $body.html()
 }

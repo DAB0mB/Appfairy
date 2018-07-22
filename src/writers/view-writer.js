@@ -2,7 +2,7 @@ import cheerio from 'cheerio'
 import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
 import { fs } from '../libs'
-import Generator from './base'
+import Writer from './writer'
 
 import {
   Internal,
@@ -13,29 +13,29 @@ import {
   upperFirst,
 } from '../utils'
 
-const _ = Symbol('_ViewGenerator')
+const _ = Symbol('_ViewWriter')
 const cleanCSS = new CleanCSS({ inline: false })
 
 @Internal(_)
-class ViewGenerator extends Generator {
-  static async saveAll(viewGenerators, dir) {
+class ViewWriter extends Writer {
+  static async writeAll(viewWriters, dir) {
     dir += '/views'
 
     await emptyDir(dir)
 
-    const savingViews = viewGenerators.map((viewGenerator) => {
-      return viewGenerator.save(dir)
+    const writingViews = viewWriters.map((viewWriter) => {
+      return viewWriter.write(dir)
     })
 
-    const index = viewGenerators.map((viewGenerator) => {
-      return `require('./${viewGenerator.name}.js')`
+    const index = viewWriters.map((viewWriter) => {
+      return `require('./${viewWriter.name}.js')`
     }).join('\n')
 
-    const savingIndex = fs.writeFile(`${dir}/index.js`, index)
+    const writingIndex = fs.writeFile(`${dir}/index.js`, index)
 
     return Promise.all([
-      ...savingViews,
-      savingIndex,
+      ...writingViews,
+      writingIndex,
     ])
   }
 
@@ -88,7 +88,7 @@ class ViewGenerator extends Generator {
         $afEl.attr(attrName, attrValue)
       })
 
-      return new ViewGenerator({
+      return new ViewWriter({
         name: elName,
         html: $el.html(),
         css: this.css,
@@ -131,7 +131,20 @@ class ViewGenerator extends Generator {
     this[_].css += cleanCSS.minify(css).styles
   }
 
-  generate() {
+  write(dir) {
+    const writingChildren = this[_].children.map((child) => {
+      return child.write()
+    })
+
+    const writingSelf = fs.writeFile(`${dir}/${this.name}.js`, this[_].compose())
+
+    return Promise.all([
+      ...writingChildren,
+      writingSelf,
+    ])
+  }
+
+  _compose() {
     return freeText(`
       const Appfairy = require('appfairy')
 
@@ -150,19 +163,6 @@ class ViewGenerator extends Generator {
       module.exports = ${this.className}
     `)
   }
-
-  save(dir) {
-    const savingChildren = this[_].children.map((child) => {
-      return child.save()
-    })
-
-    const savingSelf = fs.writeFile(`${dir}/${this.name}.js`, this.generate())
-
-    return Promise.all([
-      ...savingChildren,
-      savingSelf,
-    ])
-  }
 }
 
-export default ViewGenerator
+export default ViewWriter
