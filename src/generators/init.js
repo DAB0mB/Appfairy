@@ -8,7 +8,7 @@ const _ = Symbol('_InitGenerator')
 @Internal(_)
 class InitGenerator extends Generator {
   get scripts() {
-    return { ...this[_].scripts }
+    return this[_].scripts.slice()
   }
 
   constructor() {
@@ -23,19 +23,19 @@ class InitGenerator extends Generator {
 
       const Appfairy = require('appfairy')
 
-      const scripts = {
+      const scripts = [
         -->${this[_].joinScripts()}<--
-      }
+      ]
 
-      const loadingPromises = Object.keys(scripts).map((src) => {
-        const script = scripts[src]
+      const loadingPromises = scripts.map((script) => {
         const scriptEl = document.createElement('script')
+        scriptEl.setAttribute('type', 'text/javascript')
 
-        if (script === true) {
-          scriptEl.src = src
+        if (script.type == 'src') {
+          scriptEl.src = script.body
         }
         else {
-          scriptEl.innerHTML = script
+          scriptEl.innerHTML = script.body
         }
 
         return new Promise((resolve, reject) => {
@@ -52,24 +52,36 @@ class InitGenerator extends Generator {
     return fs.writeFile(`${dir}/index.js`, this.generate())
   }
 
-  setScript(src, script) {
+  setScript(src, content) {
+    let type
+    let body
+
     if (src) {
-      this[_].scripts[src] = true
+      type = 'src'
+      body = src
     }
     else {
-      this[_].scripts.push(uglify.minify(script).code)
+      type = 'code'
+      body = uglify.minify(content).code
+    }
+
+    const exists = this[_].scripts.some((script) => {
+      return script.body == body
+    })
+
+    if (!exists) {
+      this[_].scripts.push({ type, body })
     }
   }
 
   _joinScripts() {
-    return Object.keys(this.scripts).map((src) => {
-      let script = this[_].scripts[src]
-
-      if (script !== true) {
-        script = "'" + escapeBrackets(script) + "'"
-      }
-
-      return `'${src}': ${script},`
+    return this[_].scripts.map((script) => {
+      return freeText(`
+        {
+          type: '${script.type}',
+          body: '${escapeBrackets(script.body)}',
+        },
+      `)
     }).join('\n')
   }
 }
