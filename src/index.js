@@ -4,7 +4,7 @@ import path from 'path'
 import { promisify } from 'util'
 import { ViewWriter, ScriptWriter } from './writers'
 import { fs } from './libs'
-import { emptyDir } from './utils'
+import { emptyDir, freeText } from './utils'
 
 export const transpile = async (inputDir, outputDir, options = {}) => {
   let files
@@ -16,10 +16,15 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
     emptyDir(outputDir),
   ])
 
+  const writingIndex = fs.writeFile(`${outputDir}/index.js`, freeText(`
+    require('./views')
+    require('./scripts')
+  `))
+
   const htmlFiles = files.filter(file => path.extname(file) == '.html')
   const publicSubDirs = files.filter(file => !htmlFiles.includes(file))
 
-  const initWriter = new ScriptWriter({
+  const scriptWriter = new ScriptWriter({
     prefetch: options.prefetch
   })
 
@@ -28,14 +33,14 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
       inputDir,
       outputDir,
       htmlFile,
-      initWriter,
+      scriptWriter,
     )
   })
 
   const writingFiles = Promise.all(transpilingHTMLFiles).then((viewWriters) => {
     return Promise.all([
       ViewWriter.writeAll(viewWriters, outputDir),
-      initWriter.write(outputDir),
+      scriptWriter.write(outputDir),
     ])
   })
 
@@ -46,6 +51,7 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
   )
 
   return Promise.all([
+    writingIndex,
     writingFiles,
     makingPublicDir,
   ])
@@ -55,7 +61,7 @@ const transpileHTMLFile = async (
   inputDir,
   outputDir,
   htmlFile,
-  initWriter,
+  scriptWriter,
 ) => {
   const html = (await fs.readFile(`${inputDir}/${htmlFile}`)).toString()
   const $ = cheerio.load(html, { xmlMode: true })
@@ -66,7 +72,7 @@ const transpileHTMLFile = async (
     name: htmlFile.split('.').slice(0, -1).join('.')
   })
 
-  setScripts(initWriter, $head)
+  setScripts(scriptWriter, $head)
   appendCSSSheets(viewWriter, $head)
   setHTML(viewWriter, $body)
 
@@ -91,13 +97,13 @@ const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
   return Promise.all(makingPublicSubDirs)
 }
 
-const setScripts = async (initWriter, $head) => {
+const setScripts = async (scriptWriter, $head) => {
   const $scripts = $head.find('script[type="text/javascript"]')
 
   $scripts.each((i, script) => {
     const $script = $head.find(script)
 
-    initWriter.setScript($script.attr('src'), $script.html())
+    scriptWriter.setScript($script.attr('src'), $script.html())
   })
 }
 

@@ -33,11 +33,11 @@ class ScriptWriter extends Writer {
       prefetch: this.prefetch,
     }
 
-    if (!options.prefetch) {
-      return fs.writeFile(`${dir}/index.js`, this[_].compose())
-    }
-
     await emptyDir(`${dir}/scripts`)
+
+    if (!options.prefetch) {
+      return fs.writeFile(`${dir}/scripts/index.js`, this[_].composeScriptLoader())
+    }
 
     const scriptFileNames = this.scripts.map((script, index, { length }) => {
       return padLeft(index, length / 10 + 1, 0) + '.js'
@@ -59,19 +59,13 @@ class ScriptWriter extends Writer {
       return `require('${scriptFileName}')`
     }).join('\n')
 
-    const writingScriptsIndex = fs.writeFile(
+    const writingIndex = fs.writeFile(
       `${dir}/scripts/index.js`,
       scriptsIndexContent,
     )
 
-    const writingIndex = fs.writeFile(`${dir}/index.js`, freeText(`
-      require('./views')
-      require('./scripts')
-    `))
-
     return Promise.all([
       ...fetchingScripts,
-      writingScriptsIndex,
       writingIndex,
     ])
   }
@@ -98,7 +92,7 @@ class ScriptWriter extends Writer {
     }
   }
 
-  _compose() {
+  _composeScriptLoader() {
     const scripts = this[_].scripts.map((script) => {
       return freeText(`
         {
@@ -109,8 +103,6 @@ class ScriptWriter extends Writer {
     }).join('\n')
 
     return freeText(`
-      require('./views')
-
       const Appfairy = require('appfairy')
 
       const scripts = [

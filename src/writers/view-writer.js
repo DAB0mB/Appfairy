@@ -49,7 +49,7 @@ class ViewWriter extends Writer {
     Object.assign(this[_], {
       className: words.concat('view').map(upperFirst).join(''),
       elName: words.map(word => word.toLowerCase()).join('-'),
-      name:  words.concat('view').map(word => word.toLowerCase()).join('_'),
+      name:  words.concat('view').map(word => word.toLowerCase()).join('-'),
     })
   }
 
