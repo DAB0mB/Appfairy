@@ -8,6 +8,7 @@ import {
   emptyDir,
   escapeBrackets,
   freeText,
+  freeScript,
   padLeft,
   requireText,
 } from '../utils'
@@ -79,7 +80,7 @@ class ScriptWriter extends Writer {
 
     const writingIndex = fs.writeFile(
       `${dir}/src/scripts/index.js`,
-      scriptsIndexContent,
+      freeScript(scriptsIndexContent),
     )
 
     return Promise.all([
@@ -120,7 +121,7 @@ class ScriptWriter extends Writer {
       `)
     }).join('\n')
 
-    return freeText(`
+    return freeScript(`
       const Appfairy = require('appfairy')
 
       const scripts = [

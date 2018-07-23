@@ -52,6 +52,15 @@ export const freeText = (text) => {
     .trim()
 }
 
+// Calls freeText() and disables lint
+export const freeScript = (script) => {
+  return freeText(`
+    /* eslint-disable */
+    -->${freeText(script)}<--
+    /* eslint-enable */
+  `)
+}
+
 // upper -> Upper
 export const upperFirst = (str) => {
   return str.substr(0, 1).toUpperCase() + str.substr(1)
