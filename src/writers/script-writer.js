@@ -1,8 +1,16 @@
 import fetch from 'node-fetch'
 import uglify from 'uglify-js'
 import { fs } from '../libs'
-import { Internal, emptyDir, escapeBrackets, freeText, padLeft } from '../utils'
 import Writer from './writer'
+
+import {
+  Internal,
+  emptyDir,
+  escapeBrackets,
+  freeText,
+  padLeft,
+  requireText,
+} from '../utils'
 
 const _ = Symbol('_ScriptWriter')
 
@@ -23,7 +31,17 @@ class ScriptWriter extends Writer {
   constructor(options = {}) {
     super()
 
-    this[_].scripts = []
+    this[_].scripts = [
+      {
+        type: 'code',
+        get body() {
+          return requireText(
+            '@webcomponents/webcomponentsjs/bundles/webcomponents-sd-ce-pf.js'
+          )
+        },
+      }
+    ]
+
     this.prefetch = options.prefetch
   }
 

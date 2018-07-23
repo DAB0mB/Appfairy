@@ -3,6 +3,7 @@ import { promisify } from 'util'
 import { fs } from '../libs'
 
 export { default as Internal } from './internal'
+export { default as requireText } from './requireText'
 
 // Ensure dir exists and is empty
 export const emptyDir = async (dir) => {

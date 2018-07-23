@@ -1,9 +1,7 @@
 import cheerio from 'cheerio'
-import { ncp } from 'ncp'
 import path from 'path'
-import { promisify } from 'util'
 import { ViewWriter, ScriptWriter } from './writers'
-import { fs } from './libs'
+import { fs, ncp } from './libs'
 import { emptyDir, freeText } from './utils'
 
 export const transpile = async (inputDir, outputDir, options = {}) => {
@@ -86,7 +84,7 @@ const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
     return ['css', 'fonts', 'images', 'js'].includes(publicSubDir)
   })
   .map((publicSubDir) => {
-    return promisify(ncp)(
+    return ncp(
       `${inputDir}/${publicSubDir}`,
       `${publicDir}/${publicSubDir}`,
     )

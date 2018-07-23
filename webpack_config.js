@@ -38,5 +38,9 @@ module.exports = {
       raw: true
     })
   ],
-  externals: [nodeExternals()]
+  externals: [nodeExternals()],
+  node: {
+    __dirname: false,
+    __filename: true,
+  },
 }
