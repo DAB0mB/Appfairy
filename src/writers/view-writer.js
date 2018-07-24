@@ -8,7 +8,7 @@ import {
   Internal,
   escapeBrackets,
   emptyDir,
-  freeScript,
+  freeLint,
   splitWords,
   upperFirst,
 } from '../utils'
@@ -31,7 +31,7 @@ class ViewWriter extends Writer {
       return `require('./${viewWriter.name}.js')`
     }).join('\n')
 
-    const writingIndex = fs.writeFile(`${dir}/index.js`, freeScript(index))
+    const writingIndex = fs.writeFile(`${dir}/index.js`, freeLint(index))
 
     return Promise.all([
       ...writingViews,
@@ -145,7 +145,7 @@ class ViewWriter extends Writer {
   }
 
   _compose() {
-    return freeScript(`
+    return freeLint(`
       const Appfairy = require('appfairy')
 
       class ${this.className} extends Appfairy.View {

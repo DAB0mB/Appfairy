@@ -2,7 +2,7 @@ import cheerio from 'cheerio'
 import path from 'path'
 import { ViewWriter, ScriptWriter } from './writers'
 import { fs, ncp } from './libs'
-import { emptyDir, freeScript } from './utils'
+import { emptyDir, freeLint } from './utils'
 
 export const transpile = async (inputDir, outputDir, options = {}) => {
   let files
@@ -12,7 +12,7 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
     emptyDir(outputDir).then(() => fs.mkdir(`${outputDir}/src`)),
   ])
 
-  const writingIndex = fs.writeFile(`${outputDir}/src/index.js`, freeScript(`
+  const writingIndex = fs.writeFile(`${outputDir}/src/index.js`, freeLint(`
     require('./views')
     require('./scripts')
   `))

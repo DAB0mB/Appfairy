@@ -8,7 +8,8 @@ import {
   emptyDir,
   escapeBrackets,
   freeText,
-  freeScript,
+  freeLint,
+  freeContext,
   padLeft,
   requireText,
 } from '../utils'
@@ -68,8 +69,8 @@ class ScriptWriter extends Writer {
       let code = script.type == 'src'
         ? await fetch(script.body).then(res => res.text())
         : script.body
-
-      code = `/* eslint-disable */\n${code}\n/* eslint-enable */`
+      code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
+      code = freeContext(code)
 
       return fs.writeFile(`${dir}/src/scripts/${scriptFileName}`, code)
     })
@@ -80,7 +81,7 @@ class ScriptWriter extends Writer {
 
     const writingIndex = fs.writeFile(
       `${dir}/src/scripts/index.js`,
-      freeScript(scriptsIndexContent),
+      freeLint(scriptsIndexContent),
     )
 
     return Promise.all([
@@ -121,7 +122,7 @@ class ScriptWriter extends Writer {
       `)
     }).join('\n')
 
-    return freeScript(`
+    return freeLint(`
       const Appfairy = require('appfairy')
 
       const scripts = [

@@ -53,11 +53,24 @@ export const freeText = (text) => {
 }
 
 // Calls freeText() and disables lint
-export const freeScript = (script) => {
+export const freeLint = (script) => {
   return freeText(`
     /* eslint-disable */
+
     -->${freeText(script)}<--
+
     /* eslint-enable */
+  `)
+}
+
+// Calls freeLint() and ensures that 'this' is represented by window
+export const freeContext = (script) => {
+  return freeLint(`
+    (function() {
+
+    -->${freeText(script)}<--
+
+    }).call(window)
   `)
 }
 
