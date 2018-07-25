@@ -68,12 +68,15 @@ class ViewWriter extends Writer {
   set html(html) {
     if (!html) {
       this[_].html = ''
+      this[_].children = []
       return
     }
 
+    const children = this[_].children = []
     const $ = cheerio.load(html)
+    let el = $('[af-el]')[0]
 
-    this[_].children = $('> [af-el]').map((i, el) => {
+    while (el) {
       const $el = $(el)
       const elName = $el.attr('af-el')
       const $afEl = $(`<af-${elName}></af-${elName}>`)
@@ -88,15 +91,18 @@ class ViewWriter extends Writer {
         $afEl.attr(attrName, attrValue)
       })
 
-      return new ViewWriter({
+      const child = new ViewWriter({
         name: elName,
         html: $el.html(),
         css: this.css,
       })
-    }).toArray()
+
+      children.push(child)
+      el = $('[af-el]')[0]
+    }
 
     // Will validate as well
-    this[_].html = htmlMinifier.minify(html, {
+    this[_].html = htmlMinifier.minify($('body').html(), {
       minifyCSS: true,
       minifyJS: true,
       minifyURLs: true,
@@ -133,7 +139,7 @@ class ViewWriter extends Writer {
 
   write(dir) {
     const writingChildren = this[_].children.map((child) => {
-      return child.write()
+      return child.write(dir)
     })
 
     const writingSelf = fs.writeFile(`${dir}/${this.name}.js`, this[_].compose())

@@ -60,7 +60,7 @@ const transpileHTMLFile = async (
   scriptWriter,
 ) => {
   const html = (await fs.readFile(`${inputDir}/${htmlFile}`)).toString()
-  const $ = cheerio.load(html, { xmlMode: true })
+  const $ = cheerio.load(html)
   const $head = $('head')
   const $body = $('body')
 
