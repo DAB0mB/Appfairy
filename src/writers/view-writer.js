@@ -1,6 +1,7 @@
 import cheerio from 'cheerio'
 import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
+import statuses from 'statuses'
 import { fs } from '../libs'
 import Writer from './writer'
 
@@ -44,6 +45,10 @@ class ViewWriter extends Writer {
   }
 
   set name(name) {
+    if (!isNaN(Number(name))) {
+      name = statuses[name]
+    }
+
     const words = splitWords(name)
 
     Object.assign(this[_], {

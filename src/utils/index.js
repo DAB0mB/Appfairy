@@ -84,6 +84,7 @@ export const splitWords = (str) => {
   return str
     .replace(/[A-Z]/, ' $&')
     .split(/[^a-zA-Z0-9]+/)
+    .filter(word => word.trim())
 }
 
 // abc 5 0 -> 00abc
