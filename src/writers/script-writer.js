@@ -60,7 +60,7 @@ class ScriptWriter extends Writer {
     }
 
     const scriptFileNames = this.scripts.map((script, index, { length }) => {
-      return padLeft(index, length / 10 + 1, 0)
+      return padLeft(index, length / 10 + 1, 0) + '.js'
     })
 
     const fetchingScripts = this.scripts.map(async (script, index) => {
@@ -76,7 +76,7 @@ class ScriptWriter extends Writer {
     })
 
     const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
-      return `require('${scriptFileName}')`
+      return `require('${scriptFileName.split('.')[0]}')`
     }).join('\n')
 
     const writingIndex = fs.writeFile(

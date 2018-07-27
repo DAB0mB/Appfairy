@@ -17,12 +17,24 @@ import {
 const _ = Symbol('_ViewWriter')
 const cleanCSS = new CleanCSS({ inline: false })
 
+const flattenChildren = (children = [], flatten = []) => {
+  children.forEach((child) => {
+    flattenChildren(child[_].children, flatten)
+  })
+
+  flatten.push(...children)
+
+  return flatten
+}
+
 @Internal(_)
 class ViewWriter extends Writer {
   static async writeAll(viewWriters, dir) {
     dir += '/src/views'
 
     await emptyDir(dir)
+
+    viewWriters = flattenChildren(viewWriters)
 
     const writingViews = viewWriters.map((viewWriter) => {
       return viewWriter.write(dir)
@@ -41,7 +53,7 @@ class ViewWriter extends Writer {
   }
 
   get children() {
-    return this[_].chidlren.slice()
+    return this[_].children.slice()
   }
 
   set name(name) {
