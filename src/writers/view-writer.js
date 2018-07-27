@@ -159,7 +159,7 @@ class ViewWriter extends Writer {
     return freeLint(`
       const Appfairy = require('appfairy')
 
-      class ${this.className} extends Appfairy.View {
+      class ${this.className} extends Appfairy.View(HTMLElement) {
         initializeStyle(style) {
           style.innerHTML = '${escapeBrackets(this.css)}'
         }
