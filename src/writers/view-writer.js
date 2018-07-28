@@ -41,7 +41,7 @@ class ViewWriter extends Writer {
     })
 
     const index = viewWriters.map((viewWriter) => {
-      return `require('./${viewWriter.name}')`
+      return `exports.${viewWriter.className} = require('./${viewWriter.name}')`
     }).join('\n')
 
     const writingIndex = fs.writeFile(`${dir}/index.js`, freeLint(index))
