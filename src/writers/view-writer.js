@@ -7,7 +7,7 @@ import Writer from './writer'
 
 import {
   Internal,
-  escapeBrackets,
+  escape,
   emptyDir,
   freeLint,
   splitWords,
@@ -174,11 +174,11 @@ class ViewWriter extends Writer {
 
       class ${this.className} extends Appfairy.View(HTMLElement) {
         initializeStyle(style) {
-          style.innerHTML = '${escapeBrackets(this.css)}'
+          style.innerHTML = '${escape(this.css)}'
         }
 
         initializeView(view) {
-          view.innerHTML = '${escapeBrackets(this.html)}'
+          view.innerHTML = '${escape(this.html)}'
         }
       }
 

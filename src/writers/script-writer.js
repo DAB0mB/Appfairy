@@ -6,7 +6,7 @@ import Writer from './writer'
 import {
   Internal,
   emptyDir,
-  escapeBrackets,
+  escape,
   freeText,
   freeLint,
   freeContext,
@@ -69,11 +69,7 @@ class ScriptWriter extends Writer {
       let code = script.type == 'src'
         ? await fetch(script.body).then(res => res.text())
         : script.body
-      code = code
-        // Remove source map references
-        .replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
-        // Escape octal literals (not allowed in strict mode)
-        .replace(/\\0/, '\\\\0')
+      code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
       code = freeContext(code)
 
       return fs.writeFile(`${dir}/src/scripts/${scriptFileName}`, code)
@@ -121,7 +117,7 @@ class ScriptWriter extends Writer {
       return freeText(`
         {
           type: '${script.type}',
-          body: '${escapeBrackets(script.body)}',
+          body: '${escape(script.body)}',
         },
       `)
     }).join('\n')

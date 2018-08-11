@@ -13,8 +13,9 @@ export const emptyDir = async (dir) => {
 }
 
 // Useful for nested strings that should be evaluated
-export const escapeBrackets = (str) => {
+export const escape = (str) => {
   return str
+    .replace(/\\/g, '\\\\')
     .replace(/'/g, "\\'")
     .replace(/"/g, '\\"')
     .replace(/`/g, '\\`')
