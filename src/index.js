@@ -8,8 +8,16 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
   let files
 
   await Promise.all([
-    fs.readdir(inputDir).then(result => files = result),
-    emptyDir(outputDir).then(() => fs.mkdir(`${outputDir}/src`)),
+    fs.readdir(inputDir).then({
+      result => files = result
+    }),
+    fs.stat(outputDir).catch(() => {
+      // Removing dir is dangerous, so we will just print a warning and exit
+      console.error(`Output directory ${outputDir} already exists`)
+      process.exit(1)
+    }).then(() => {
+      fs.mkdir(`${outputDir}/src`)
+    }),
   ])
 
   const writingIndex = fs.writeFile(`${outputDir}/src/index.js`, freeLint(`
