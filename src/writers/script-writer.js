@@ -76,7 +76,7 @@ class ScriptWriter extends Writer {
     })
 
     const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
-      return `require('${scriptFileName.split('.')[0]}')`
+      return `require('./${scriptFileName.split('.')[0]}')`
     }).join('\n')
 
     const writingIndex = fs.writeFile(
