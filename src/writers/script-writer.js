@@ -69,7 +69,11 @@ class ScriptWriter extends Writer {
       let code = script.type == 'src'
         ? await fetch(script.body).then(res => res.text())
         : script.body
-      code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
+      code = code
+        // Remove source map references
+        .replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
+        // Escape octal literals (not allowed in strict mode)
+        .replace(/\\0/, '\\\\0')
       code = freeContext(code)
 
       return fs.writeFile(`${dir}/src/scripts/${scriptFileName}`, code)
