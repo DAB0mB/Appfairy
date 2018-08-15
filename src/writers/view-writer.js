@@ -121,6 +121,9 @@ class ViewWriter extends Writer {
 
     // Apply ignore rules AFTER child elements were plucked
     $('[af-ignore]').remove()
+    // Remove inline script tags. Will ensure Webflow runtime library and jQuery
+    // are not loaded
+    $('script').remove()
 
     // Will validate as well
     this[_].html = htmlMinifier.minify($('body').html(), {
