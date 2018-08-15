@@ -11,13 +11,17 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
     fs.readdir(inputDir).then((result) => {
       files = result
     }),
-    fs.stat(outputDir).catch(() => {
-      // Removing dir is dangerous, so we will just print a warning and exit
-      console.error(`Output directory ${outputDir} already exists`)
-      process.exit(1)
+    fs.exists(outputDir).then((exists) => {
+      if (exists) {
+        // Removing dir is dangerous, so we will just print a warning and exit
+        console.error(`Output directory ${outputDir} already exists`)
+        process.exit(1)
+      }
+
+      return fs.mkdir(outputDir)
     }).then(() => {
-      fs.mkdir(`${outputDir}/src`)
-    }),
+      return fs.mkdir(`${outputDir}/src`)
+    })
   ])
 
   const writingIndex = fs.writeFile(`${outputDir}/src/index.js`, freeLint(`
