@@ -119,6 +119,9 @@ class ViewWriter extends Writer {
       el = $('[af-el]')[0]
     }
 
+    // Apply ignore rules AFTER child elements were plucked
+    $('[af-ignore]').remove()
+
     // Will validate as well
     this[_].html = htmlMinifier.minify($('body').html(), {
       minifyCSS: true,
