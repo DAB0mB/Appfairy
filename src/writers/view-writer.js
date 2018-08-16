@@ -184,11 +184,15 @@ class ViewWriter extends Writer {
 
   // Unlike the setter, this will only minify the appended CSS
   appendCSS(css, skipLine) {
-    this[_].css += cleanCSS.minify(css).styles
-
-    if (skipLine) {
+    if (!this[_].css) {
+      this[_].css = ''
+    }
+    // Will prevent redundant line skip
+    else if (skipLine) {
       this[_].css += '\n'
     }
+
+    this[_].css += cleanCSS.minify(css).styles
   }
 
   write(dir) {

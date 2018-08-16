@@ -30,7 +30,7 @@ export const freeText = (text) => {
   // This will allow inline text generation with external functions, same as ctrl+shift+c
   // As long as we surround the inline text with ==>text<==
   text = text.replace(
-    /( *)==>((?:.|\n)*)<==/g,
+    /( *)==>((?:.|\n)*?)<==/g,
     (match, baseIndent, content) =>
   {
     return content
