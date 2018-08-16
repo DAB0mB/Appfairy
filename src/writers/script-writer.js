@@ -126,7 +126,7 @@ class ScriptWriter extends Writer {
       const Appfairy = require('appfairy')
 
       const scripts = [
-        -->${scripts}<--
+        ==>${scripts}<==
       ]
 
       const loadingPromises = scripts.map((script) => {

@@ -3,9 +3,9 @@
 const { transpile } = require('.')
 const minimist = require('minimist')
 
-const { input, output, prefetch } = minimist(process.argv.slice(2), {
+const { input, output, minify, prefetch } = minimist(process.argv.slice(2), {
   string: ['input', 'output'],
-  boolean: ['prefetch'],
+  boolean: ['minify', 'prefetch'],
   alias: {
     in: 'input',
     out: 'output',
@@ -14,10 +14,11 @@ const { input, output, prefetch } = minimist(process.argv.slice(2), {
     input: process.cwd(),
     output: `${process.cwd()}/out`,
     prefetch: false,
+    minify: false,
   }
 });
 
-transpile(input, output, { prefetch }).then(() => {
+transpile(input, output, { minify, prefetch }).then(() => {
   console.log()
   console.log(`Transpilation to ${output} has been complete`)
   console.log()

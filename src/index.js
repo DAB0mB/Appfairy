@@ -42,6 +42,7 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
       outputDir,
       htmlFile,
       scriptWriter,
+      options,
     )
   })
 
@@ -70,6 +71,7 @@ const transpileHTMLFile = async (
   outputDir,
   htmlFile,
   scriptWriter,
+  options,
 ) => {
   const html = (await fs.readFile(`${inputDir}/${htmlFile}`)).toString()
   const $ = cheerio.load(html)
@@ -77,7 +79,8 @@ const transpileHTMLFile = async (
   const $body = $('body')
 
   const viewWriter = new ViewWriter({
-    name: htmlFile.split('.').slice(0, -1).join('.')
+    name: htmlFile.split('.').slice(0, -1).join('.'),
+    minify: options.minify,
   })
 
   setScripts(scriptWriter, $head)
@@ -121,7 +124,7 @@ const appendCSSSheets = async (viewWriter, $head) => {
   $links.each((i, link) => {
     const href = $head.find(link).attr('href')
 
-    viewWriter.appendCSS(`@import "${href}";`)
+    viewWriter.appendCSS(`@import "${href}";`, true)
   })
 }
 

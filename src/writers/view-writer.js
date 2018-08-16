@@ -1,6 +1,7 @@
 import cheerio from 'cheerio'
 import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
+import pretty from 'pretty'
 import statuses from 'statuses'
 import { fs } from '../libs'
 import Writer from './writer'
@@ -113,6 +114,7 @@ class ViewWriter extends Writer {
         name: elName,
         html: $el.html(),
         css: this.css,
+        minify: this.minify,
       })
 
       children.push(child)
@@ -125,13 +127,21 @@ class ViewWriter extends Writer {
     // are not loaded
     $('script').remove()
 
-    // Will validate as well
-    this[_].html = htmlMinifier.minify($('body').html(), {
-      minifyCSS: true,
-      minifyJS: true,
-      minifyURLs: true,
-      collapseWhitespace: true,
-    })
+    html = $('body').html()
+
+    if (this.minify) {
+      html = htmlMinifier.minify(html, {
+        minifyCSS: true,
+        minifyJS: true,
+        minifyURLs: true,
+        collapseWhitespace: true,
+      })
+    }
+    else {
+      html = pretty(html)
+    }
+
+    this[_].html = html
   }
 
   get html() {
@@ -139,12 +149,27 @@ class ViewWriter extends Writer {
   }
 
   set css(css) {
-    // Will validate as well
-    this[_].css = css ? cleanCSS.minify(css).styles : ''
+    if (!css) {
+      this[_].css = ''
+    }
+
+    if (this.minify) {
+      css = cleanCSS.minify(css).styles
+    }
+
+    this[_].css = css
   }
 
   get css() {
     return this[_].css
+  }
+
+  set minify(minify) {
+    this[_].minify = !!minify
+  }
+
+  get minify() {
+    return this[_].minify
   }
 
   constructor(props) {
@@ -154,11 +179,16 @@ class ViewWriter extends Writer {
     this.name = props.name
     this.css = props.css
     this.html = props.html
+    this.minify = props.minify
   }
 
   // Unlike the setter, this will only minify the appended CSS
-  appendCSS(css) {
+  appendCSS(css, skipLine) {
     this[_].css += cleanCSS.minify(css).styles
+
+    if (skipLine) {
+      this[_].css += '\n'
+    }
   }
 
   write(dir) {
@@ -180,11 +210,15 @@ class ViewWriter extends Writer {
 
       class ${this.className} extends Appfairy.View(HTMLElement) {
         initializeStyle(style) {
-          style.innerHTML = '${escape(this.css)}'
+          style.innerHTML = \`
+            ==>${escape(this.css)}<==
+          \`
         }
 
         initializeView(view) {
-          view.innerHTML = '${escape(this.html)}'
+          view.innerHTML = \`
+            ==>${escape(this.html)}<==
+          \`
         }
       }
 
