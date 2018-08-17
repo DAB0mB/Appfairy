@@ -51,6 +51,7 @@ export const freeText = (text) => {
     .map(line => line.slice(minIndent))
     .join('\n')
     .trim()
+    .replace(/\n +\n/g, '\n\n')
 }
 
 // Calls freeText() and disables lint
