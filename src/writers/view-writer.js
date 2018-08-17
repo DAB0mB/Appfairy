@@ -123,6 +123,8 @@ class ViewWriter extends Writer {
 
     // Apply ignore rules AFTER child elements were plucked
     $('[af-ignore]').remove()
+    // Empty inner HTML
+    $('[af-empty]').html('').attr('af-empty', null)
     // Remove inline script tags. Will ensure Webflow runtime library and jQuery
     // are not loaded
     $('script').remove()
