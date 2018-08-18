@@ -13,12 +13,18 @@ export const emptyDir = async (dir) => {
 }
 
 // Useful for nested strings that should be evaluated
-export const escape = (str) => {
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/"/g, '\\"')
-    .replace(/`/g, '\\`')
+export const escape = (str, quote) => {
+  str = str.replace(/\\/g, '\\\\')
+
+  switch (quote) {
+    case "'": return str.replace(/'/g, "\\'")
+    case '"': return str.replace(/"/g, '\\"')
+    case '`': return str.replace(/`/g, '\\`')
+    default: str
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"')
+      .replace(/`/g, '\\`')
+  }
 }
 
 // Will use the shortest indention as an axis

@@ -152,10 +152,9 @@ class ViewWriter extends Writer {
 
   set css(css) {
     if (!css) {
-      this[_].css = ''
+      css = ''
     }
-
-    if (this.minify) {
+    else if (this.minify) {
       css = cleanCSS.minify(css).styles
     }
 
@@ -178,10 +177,10 @@ class ViewWriter extends Writer {
     super()
 
     this[_].children = []
+    this.minify = props.minify
     this.name = props.name
     this.css = props.css
     this.html = props.html
-    this.minify = props.minify
   }
 
   // Unlike the setter, this will only minify the appended CSS
@@ -217,13 +216,13 @@ class ViewWriter extends Writer {
       class ${this.className} extends Appfairy.View(HTMLElement) {
         initializeStyle(style) {
           style.innerHTML = \`
-            ==>${escape(this.css)}<==
+            ==>${escape(this.css, '`')}<==
           \`
         }
 
         initializeView(view) {
           view.innerHTML = \`
-            ==>${escape(this.html)}<==
+            ==>${escape(this.html, '`')}<==
           \`
         }
       }
