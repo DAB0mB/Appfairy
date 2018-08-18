@@ -29,21 +29,24 @@ let {
   },
 })
 
+if (config) {
+  config = path.resolve(process.cwd(), config)
+}
+else try {
+  fs.statSync(`${root}/af_config.js`)
+  config = `${root}/af_config.js`
+}
+catch (e) {
+  // File in default path not exist
+}
+
 const configBase = {
   minify,
   prefetch,
   input,
   output,
   // Preserve original path
-  path: config,
-}
-
-if (!config) try {
-  fs.statSync(`${root}/af_config.js`)
-  config = `${root}/af_config.js`
-}
-catch (e) {
-  // File in default path not exist
+  __dirname: path.dirname(config),
 }
 
 if (config) {
@@ -80,6 +83,6 @@ transpile(config).then(() => {
   console.log()
   console.log('Transpilation has failed. Error:')
   console.log()
-  console.log(e.stack)
+  console.log(e)
   console.log()
 })

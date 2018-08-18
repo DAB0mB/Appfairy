@@ -61,19 +61,19 @@ export const transpile = async (config) => {
   const mapping = []
 
   if (config.map.public) {
-    const publicDir = path.resolve(config.path, config.map.public)
-    mapping.push(ncp(`${config.out}/public`, publicDir))
+    const publicDir = path.resolve(config.__dirname, config.map.public)
+    mapping.push(ncp(`${config.output}/public`, publicDir))
   }
 
   if (config.map.src) {
     if (config.map.src.views) {
-      const viewsDir = path.resolve(config.path, config.map.src.views)
-      mapping.push(ncp(`${config.out}/src/views`, viewsDir))
+      const viewsDir = path.resolve(config.__dirname, config.map.src.views)
+      mapping.push(ncp(`${config.output}/src/views`, viewsDir))
     }
 
     if (config.map.src.views) {
-      const scriptsDir = path.resolve(config.path, config.map.src.scripts)
-      mapping.push(ncp(`${config.out}/src/scripts`, scriptsDir))
+      const scriptsDir = path.resolve(config.__dirname, config.map.src.scripts)
+      mapping.push(ncp(`${config.output}/src/scripts`, scriptsDir))
     }
   }
 
