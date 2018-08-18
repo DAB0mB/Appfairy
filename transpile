@@ -34,6 +34,8 @@ const configBase = {
   prefetch,
   input,
   output,
+  // Preserve original path
+  path: config,
 }
 
 if (config) {

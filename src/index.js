@@ -48,11 +48,36 @@ export const transpile = async (config) => {
     publicSubDirs,
   )
 
-  return Promise.all([
+  await Promise.all([
     writingIndex,
     writingFiles,
     makingPublicDir,
   ])
+
+  if (!config.map) {
+    return
+  }
+
+  const mapping = []
+
+  if (config.map.public) {
+    const publicDir = path.resolve(config.path, config.map.public)
+    mapping.push(ncp(`${config.out}/public`, publicDir))
+  }
+
+  if (config.map.src) {
+    if (config.map.src.views) {
+      const viewsDir = path.resolve(config.path, config.map.src.views)
+      mapping.push(ncp(`${config.out}/src/views`, viewsDir))
+    }
+
+    if (config.map.src.views) {
+      const scriptsDir = path.resolve(config.path, config.map.src.scripts)
+      mapping.push(ncp(`${config.out}/src/scripts`, scriptsDir))
+    }
+  }
+
+  return Promise.all(mapping)
 }
 
 const transpileHTMLFile = async (
