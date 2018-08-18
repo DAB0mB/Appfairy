@@ -20,7 +20,7 @@ export const escape = (str, quote) => {
     case "'": return str.replace(/'/g, "\\'")
     case '"': return str.replace(/"/g, '\\"')
     case '`': return str.replace(/`/g, '\\`')
-    default: str
+    default: return str
       .replace(/'/g, "\\'")
       .replace(/"/g, '\\"')
       .replace(/`/g, '\\`')

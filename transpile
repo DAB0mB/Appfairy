@@ -1,26 +1,69 @@
 #!/usr/bin/env node
 
 const { transpile } = require('.')
+const findRoot = require('find-root')
+const fs = require('fs')
 const minimist = require('minimist')
+const path = require('path')
 
-const { input, output, minify, prefetch } = minimist(process.argv.slice(2), {
-  string: ['input', 'output'],
+const root = findRoot(process.cwd())
+
+let {
+  input,
+  output,
+  config,
+  minify,
+  prefetch,
+} = minimist(process.argv.slice(2), {
+  string: ['input', 'output', 'config'],
   boolean: ['minify', 'prefetch'],
   alias: {
     in: 'input',
     out: 'output',
   },
   default: {
-    input: process.cwd(),
-    output: `${process.cwd()}/out`,
-    prefetch: false,
     minify: false,
-  }
-});
+    prefetch: false,
+    input: `${root}/.appfairy/in`,
+    output: `${root}/.appfairy/out`,
+  },
+})
 
-transpile(input, output, { minify, prefetch }).then(() => {
+const configBase = {
+  minify,
+  prefetch,
+  input,
+  output,
+}
+
+if (config) {
+  // Will throw an error if file not exist
+  config = Object.assign(configBase, require(config))
+}
+else {
+  config = configBase
+}
+
+config.input = path.resolve(process.cwd(), config.input)
+config.output = path.resolve(process.cwd(), config.output)
+
+try {
+  fs.statSync(config.input)
+}
+catch (e) {
+  throw Error(`Input path "${config.input}" not found`)
+}
+
+try {
+  fs.statSync(config.output)
+}
+catch (e) {
+  throw Error(`Output path "${config.output}" not found`)
+}
+
+transpile(config).then(() => {
   console.log()
-  console.log(`Transpilation to ${output} has been complete`)
+  console.log(`Transpilation to ${config.output} has been complete`)
   console.log()
 })
 .catch((e) => {

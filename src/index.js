@@ -4,27 +4,19 @@ import { ViewWriter, ScriptWriter } from './writers'
 import { fs, ncp } from './libs'
 import { emptyDir, freeLint } from './utils'
 
-export const transpile = async (inputDir, outputDir, options = {}) => {
+export const transpile = async (config) => {
   let files
 
   await Promise.all([
-    fs.readdir(inputDir).then((result) => {
+    fs.readdir(config.input).then((result) => {
       files = result
     }),
-    fs.exists(outputDir).then((exists) => {
-      if (exists) {
-        // Removing dir is dangerous, so we will just print a warning and exit
-        console.error(`Output directory ${outputDir} already exists`)
-        process.exit(1)
-      }
-
-      return fs.mkdir(outputDir)
-    }).then(() => {
-      return fs.mkdir(`${outputDir}/src`)
-    })
+    emptyDir(config.output).then(() => {
+      return fs.mkdir(`${config.output}/src`)
+    }),
   ])
 
-  const writingIndex = fs.writeFile(`${outputDir}/src/index.js`, freeLint(`
+  const writingIndex = fs.writeFile(`${config.output}/src/index.js`, freeLint(`
     require('./views')
     require('./scripts')
   `))
@@ -33,29 +25,26 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
   const publicSubDirs = files.filter(file => !htmlFiles.includes(file))
 
   const scriptWriter = new ScriptWriter({
-    prefetch: options.prefetch
+    prefetch: config.prefetch
   })
 
   const transpilingHTMLFiles = htmlFiles.map((htmlFile) => {
     return transpileHTMLFile(
-      inputDir,
-      outputDir,
+      config,
       htmlFile,
       scriptWriter,
-      options,
     )
   })
 
   const writingFiles = Promise.all(transpilingHTMLFiles).then((viewWriters) => {
     return Promise.all([
-      ViewWriter.writeAll(viewWriters, outputDir),
-      scriptWriter.write(outputDir),
+      ViewWriter.writeAll(viewWriters, config.output),
+      scriptWriter.write(config.output),
     ])
   })
 
   const makingPublicDir = makePublicDir(
-    inputDir,
-    outputDir,
+    config,
     publicSubDirs,
   )
 
@@ -67,20 +56,18 @@ export const transpile = async (inputDir, outputDir, options = {}) => {
 }
 
 const transpileHTMLFile = async (
-  inputDir,
-  outputDir,
+  config,
   htmlFile,
   scriptWriter,
-  options,
 ) => {
-  const html = (await fs.readFile(`${inputDir}/${htmlFile}`)).toString()
+  const html = (await fs.readFile(`${config.input}/${htmlFile}`)).toString()
   const $ = cheerio.load(html)
   const $head = $('head')
   const $body = $('body')
 
   const viewWriter = new ViewWriter({
     name: htmlFile.split('.').slice(0, -1).join('.'),
-    minify: options.minify,
+    minify: config.minify,
   })
 
   setScripts(scriptWriter, $head)
@@ -90,8 +77,8 @@ const transpileHTMLFile = async (
   return viewWriter
 }
 
-const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
-  const publicDir = `${outputDir}/public`
+const makePublicDir = async (config, publicSubDirs) => {
+  const publicDir = `${config.output}/public`
 
   await emptyDir(publicDir)
 
@@ -100,7 +87,7 @@ const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
   })
   .map((publicSubDir) => {
     return ncp(
-      `${inputDir}/${publicSubDir}`,
+      `${config.input}/${publicSubDir}`,
       `${publicDir}/${publicSubDir}`,
     )
   })

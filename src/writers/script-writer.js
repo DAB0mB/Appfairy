@@ -117,7 +117,7 @@ class ScriptWriter extends Writer {
       return freeText(`
         {
           type: '${script.type}',
-          body: '${escape(script.body)}',
+          body: '${escape(script.body, "'")}',
         },
       `)
     }).join('\n')
