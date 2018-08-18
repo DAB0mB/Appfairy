@@ -38,6 +38,14 @@ const configBase = {
   path: config,
 }
 
+if (!config) try {
+  fs.statSync(`${root}/af_config.js`)
+  config = `${root}/af_config.js`
+}
+catch (e) {
+  // File in default path not exist
+}
+
 if (config) {
   // Will throw an error if file not exist
   config = Object.assign(configBase, require(config))
