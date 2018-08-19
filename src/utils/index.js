@@ -102,3 +102,10 @@ export const padLeft = (str, length, char = ' ') => {
 
   return Array(length).join(char) + str
 }
+
+// Get deep property e.g. 'foo.bar.baz'
+export const get = (obj, keys) => {
+  return keys.reduce((obj, key) => {
+    return obj[key]
+  }, obj)
+}

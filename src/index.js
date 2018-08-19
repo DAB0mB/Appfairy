@@ -1,18 +1,19 @@
 import cheerio from 'cheerio'
 import path from 'path'
+import { fs, ncp, reread } from './libs'
+import { emptyDir, freeLint, get } from './utils'
 import { ViewWriter, ScriptWriter } from './writers'
-import { fs, ncp } from './libs'
-import { emptyDir, freeLint } from './utils'
 
 export const transpile = async (config) => {
-  let files
+  let inputFiles
+  let outputFiles
 
   await Promise.all([
-    fs.readdir(config.input).then((result) => {
-      files = result
+    fs.readdir(config.input).then((files) => {
+      inputFiles = files
     }),
-    emptyDir(config.output).then(() => {
-      return fs.mkdir(`${config.output}/src`)
+    emptyOutputDir(config).then((files) => {
+      outputFiles = files
     }),
   ])
 
@@ -21,8 +22,8 @@ export const transpile = async (config) => {
     require('./scripts')
   `))
 
-  const htmlFiles = files.filter(file => path.extname(file) == '.html')
-  const publicSubDirs = files.filter(file => !htmlFiles.includes(file))
+  const htmlFiles = inputFiles.filter(file => path.extname(file) == '.html')
+  const publicSubDirs = inputFiles.filter(file => !htmlFiles.includes(file))
 
   const scriptWriter = new ScriptWriter({
     prefetch: config.prefetch
@@ -60,24 +61,47 @@ export const transpile = async (config) => {
 
   const mapping = []
 
-  if (config.map.public) {
-    const publicDir = path.resolve(config.__dirname, config.map.public)
-    mapping.push(ncp(`${config.output}/public`, publicDir))
-  }
-
-  if (config.map.src) {
-    if (config.map.src.views) {
-      const viewsDir = path.resolve(config.__dirname, config.map.src.views)
-      mapping.push(ncp(`${config.output}/src/views`, viewsDir))
-    }
-
-    if (config.map.src.views) {
-      const scriptsDir = path.resolve(config.__dirname, config.map.src.scripts)
-      mapping.push(ncp(`${config.output}/src/scripts`, scriptsDir))
-    }
-  }
+  mapping.push(mapOutput(config, outputFiles, 'public'))
+  mapping.push(mapOutput(config, outputFiles, 'src', 'views'))
+  mapping.push(mapOutput(config, outputFiles, 'src', 'scripts'))
 
   return Promise.all(mapping)
+}
+
+// Will retrieve a list of all files in the old output dir before emptying it
+const emptyOutputDir = async (config) => {
+  const files = {
+    public: [],
+    src: {
+      views: [],
+      scripts: [],
+    },
+  }
+
+  if (config.map) try {
+    await Promise.all([
+      config.map.public &&
+      reread(`${config.output}/public`).then(publicFiles => {
+        files.public = publicFiles.map(file => path.relative(config.output, file))
+      }),
+      config.map.src.views &&
+      reread(`${config.output}/src/views`).then(viewFiles => {
+        files.src.views = viewFiles.map(file => path.relative(config.output, file))
+      }),
+      config.map.src.scripts &&
+      reread(`${config.output}/src/scripts`).then(scriptFiles => {
+        files.src.scripts = scriptFiles.map(file => path.relative(config.output, file))
+      }),
+    ])
+  }
+  catch (e) {
+    // Not exist
+  }
+
+  await emptyDir(config.output)
+  await fs.mkdir(`${config.output}/src`)
+
+  return files
 }
 
 const transpileHTMLFile = async (
@@ -142,4 +166,18 @@ const appendCSSSheets = async (viewWriter, $head) => {
 
 const setHTML = (viewWriter, $body) => {
   viewWriter.html = $body.html()
+}
+
+// Remove old files and copy output sub-dirs based on map config
+const mapOutput = async (config, files, ...dirs) => {
+  files = get(files, dirs)
+  const value = get(config.map, dirs)
+  const src = path.resolve(config.output, ...dirs)
+  const dst = path.resolve(config.__dirname, value)
+
+  await files.map((file) => {
+    return fs.unlink(path.resolve(dst, file))
+  })
+
+  return ncp(src, dst)
 }
