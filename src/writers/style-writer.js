@@ -70,7 +70,7 @@ class StyleWriter extends Writer {
         ? style.body
         : /^http/.test(style.body)
         ? await fetch(style.body).then(res => res.text())
-        : requireText(`${this.baseUrl}/${style.body}`)
+        : await requireText.promise(`${this.baseUrl}/${style.body}`)
 
       return fs.writeFile(`${dir}/src/styles/${styleFileName}`, sheet)
     })
@@ -141,6 +141,8 @@ class StyleWriter extends Writer {
           styleEl.type = 'text/css'
           styleEl.innerHTML = style.body
         }
+
+        document.head.appendChild(styleEl)
 
         return new Promise((resolve, reject) => {
           style.onload = resolve

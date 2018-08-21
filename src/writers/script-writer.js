@@ -78,7 +78,7 @@ class ScriptWriter extends Writer {
     })
 
     const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
-      return `require('./${scriptFileName.split('.')[0]}')`
+      return `require('./${scriptFileName}')`
     }).join('\n')
 
     const writingIndex = fs.writeFile(
@@ -139,6 +139,8 @@ class ScriptWriter extends Writer {
         else {
           scriptEl.innerHTML = script.body
         }
+
+        document.head.appendChild(scriptEl)
 
         return new Promise((resolve, reject) => {
           script.onload = resolve

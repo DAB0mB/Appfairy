@@ -1,20 +1,23 @@
 import cheerio from 'cheerio'
 import HTMLtoJSX from 'htmltojsx'
+import path from 'path'
 import pretty from 'pretty'
 import statuses from 'statuses'
 import { fs } from '../libs'
 import Writer from './writer'
 
 import {
-  Internal,
   emptyDir,
   freeLint,
+  Internal,
+  requireText,
   splitWords,
   upperFirst,
 } from '../utils'
 
 const _ = Symbol('_ViewWriter')
 const htmltojsx = new HTMLtoJSX({ createClass: false })
+const viewUtils = requireText(path.resolve(__dirname, '../src/utils/view.js'))
 
 const flattenChildren = (children = [], flatten = []) => {
   children.forEach((child) => {
@@ -44,10 +47,12 @@ class ViewWriter extends Writer {
     }).join('\n')
 
     const writingIndex = fs.writeFile(`${dir}/index.js`, freeLint(index))
+    const writingUtils = fs.writeFile(`${dir}/utils.js`, viewUtils)
 
     return Promise.all([
       ...writingViews,
       writingIndex,
+      writingUtils,
     ])
   }
 
@@ -130,16 +135,10 @@ class ViewWriter extends Writer {
 
     this[_].html = html
 
+    // Transforming HTML into JSX
     let jsx = htmltojsx.convert(html).trim()
-
-    children.forEach((child) => {
-      jsx = jsx.replace(
-        new RegExp(`af-${child.elName}`, 'g'),
-        `${child.className}.Controller`
-      )
-    })
-
-    this[_].jsx = jsx
+    // Bind controller to view
+    this[_].jsx = bindJSX(jsx, children)
   }
 
   get html() {
@@ -178,6 +177,8 @@ class ViewWriter extends Writer {
 
       class ${this.className} extends React.Component {
         render() {
+          const proxies = transformProxies(this.props.children)
+
           return (
             ==>${this.jsx}<==
           )
@@ -189,10 +190,42 @@ class ViewWriter extends Writer {
   }
 
   _composeChildImports() {
-    return this[_].children.map((child) => {
+    const imports = this[_].children.map((child) => {
       return `const ${child.className} = require('./${child.className}')`
-    }).join('\n')
+    })
+
+    imports.push(`const { transformProxies } = require('./utils')`)
+
+    return imports.join('\n')
   }
+}
+
+function bindJSX(jsx, children = []) {
+  children.forEach((child) => {
+    jsx = jsx.replace(
+      new RegExp(`af-${child.elName}`, 'g'),
+      `${child.className}.Controller`
+    )
+  })
+
+  // ORDER MATTERS
+  return jsx
+  // Get rid of self closing tags and inline elements so we won't have any
+  // surprises in the upcoming transformations
+  .replace(/^( +)<([^/ ]+)(.*) \/>$/gm, '$1<$2$3>\n$1</$2>')
+  .replace(/^( +)<([^/ ]+)(.*)>(.+)<\/\2>$/gm, '$1<$2$3>\n$1  $4\n$1</$2>')
+  // Apply conditional rendering
+  .replace(/\n( +)<([^/ ]+)(.*) af-sock="([^"]+)" (.*)>\n\1 {2}((?:\n|.)+)\n\1<\/\2>/,
+  (match, indent, tag, leftAttrs, sock, rightAttrs, content) => [
+    '',
+    `${indent}{proxies["${sock}"] && (`,
+    `${indent}  <${tag}${leftAttrs} ${rightAttrs} { ...proxies["${sock}"].props }>`,
+    `${indent}    {proxies["${sock}"].props.children ? proxies["${sock}"].props.children : <React.Fragment>`,
+    `${indent}      ${content.split('\n').map(line => `${indent}${line}`).join('\n').trim()}`,
+    `${indent}    </React.Fragment>}`,
+    `${indent}  </${tag}>`,
+    `${indent})}`,
+  ].join('\n'))
 }
 
 export default ViewWriter
