@@ -73,6 +73,7 @@ export const transpile = async (config) => {
   mapping.push(mapOutput(config, outputFiles, 'public'))
   mapping.push(mapOutput(config, outputFiles, 'src', 'views'))
   mapping.push(mapOutput(config, outputFiles, 'src', 'scripts'))
+  mapping.push(mapOutput(config, outputFiles, 'src', 'styles'))
 
   return Promise.all(mapping)
 }
