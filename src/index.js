@@ -199,9 +199,16 @@ const mapOutput = async (config, files, ...dirs) => {
   const src = path.resolve(config.output, ...dirs)
   const dst = path.resolve(config.__dirname, value)
 
-  await files.map((file) => {
-    return fs.unlink(path.resolve(dst, file))
+  const removeingOldFiles = files.map(async (file) => {
+    try {
+      await fs.unlink(path.resolve(dst, file))
+    }
+    catch (e) {
+      // Not exists
+    }
   })
+
+  await Promise.all(removeingOldFiles)
 
   return ncp(src, dst)
 }
