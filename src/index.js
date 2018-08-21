@@ -2,7 +2,7 @@ import cheerio from 'cheerio'
 import path from 'path'
 import { fs, ncp, reread } from './libs'
 import { emptyDir, freeLint, get } from './utils'
-import { ViewWriter, ScriptWriter } from './writers'
+import { ViewWriter, ScriptWriter, StyleWriter } from './writers'
 
 export const transpile = async (config) => {
   let inputFiles
@@ -20,12 +20,19 @@ export const transpile = async (config) => {
   const writingIndex = fs.writeFile(`${config.output}/src/index.js`, freeLint(`
     require('./views')
     require('./scripts')
+    require('./styles')
   `))
 
   const htmlFiles = inputFiles.filter(file => path.extname(file) == '.html')
   const publicSubDirs = inputFiles.filter(file => !htmlFiles.includes(file))
 
   const scriptWriter = new ScriptWriter({
+    baseUrl: config.input,
+    prefetch: config.prefetch,
+  })
+
+  const styleWriter = new StyleWriter({
+    baseUrl: config.input,
     prefetch: config.prefetch
   })
 
@@ -34,6 +41,7 @@ export const transpile = async (config) => {
       config,
       htmlFile,
       scriptWriter,
+      styleWriter,
     )
   })
 
@@ -41,6 +49,7 @@ export const transpile = async (config) => {
     return Promise.all([
       ViewWriter.writeAll(viewWriters, config.output),
       scriptWriter.write(config.output),
+      styleWriter.write(config.output),
     ])
   })
 
@@ -75,6 +84,7 @@ const emptyOutputDir = async (config) => {
     src: {
       views: [],
       scripts: [],
+      styles: [],
     },
   }
 
@@ -92,6 +102,10 @@ const emptyOutputDir = async (config) => {
       reread(`${config.output}/src/scripts`).then(scriptFiles => {
         files.src.scripts = scriptFiles.map(file => path.relative(config.output, file))
       }),
+      config.map.src.styles &&
+      reread(`${config.output}/src/styles`).then(styleFiles => {
+        files.src.styles = styleFiles.map(file => path.relative(config.output, file))
+      }),
     ])
   }
   catch (e) {
@@ -108,6 +122,7 @@ const transpileHTMLFile = async (
   config,
   htmlFile,
   scriptWriter,
+  styleWriter,
 ) => {
   const html = (await fs.readFile(`${config.input}/${htmlFile}`)).toString()
   const $ = cheerio.load(html)
@@ -120,7 +135,7 @@ const transpileHTMLFile = async (
   })
 
   setScripts(scriptWriter, $head)
-  appendCSSSheets(viewWriter, $head)
+  setStyles(styleWriter, $head)
   setHTML(viewWriter, $body)
 
   return viewWriter
@@ -154,13 +169,13 @@ const setScripts = async (scriptWriter, $head) => {
   })
 }
 
-const appendCSSSheets = async (viewWriter, $head) => {
-  const $links = $head.find('link[rel="stylesheet"][type="text/css"]')
+const setStyles = async (styleWriter, $head) => {
+  const $styles = $head.find('link[rel="stylesheet"][type="text/css"]')
 
-  $links.each((i, link) => {
-    const href = $head.find(link).attr('href')
+  $styles.each((i, style) => {
+    const $style = $head.find(style)
 
-    viewWriter.appendCSS(`@import "${href}";`, true)
+    styleWriter.setStyle($style.attr('href'), $style.html())
   })
 }
 

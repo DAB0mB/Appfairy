@@ -12,7 +12,6 @@
     "prepublish": "npm run build"
   },
   "dependencies": {
-    "@webcomponents/webcomponentsjs": "^2.0.3",
     "cheerio": "^1.0.0-rc.2",
     "clean-css": "^4.1.11",
     "find-root": "^1.1.0",

@@ -1,5 +1,4 @@
 import cheerio from 'cheerio'
-import CleanCSS from 'clean-css'
 import htmlMinifier from 'html-minifier'
 import pretty from 'pretty'
 import statuses from 'statuses'
@@ -16,7 +15,6 @@ import {
 } from '../utils'
 
 const _ = Symbol('_ViewWriter')
-const cleanCSS = new CleanCSS({ inline: false })
 
 const flattenChildren = (children = [], flatten = []) => {
   children.forEach((child) => {
@@ -113,7 +111,6 @@ class ViewWriter extends Writer {
       const child = new ViewWriter({
         name: elName,
         html: $el.html(),
-        css: this.css,
         minify: this.minify,
       })
 
@@ -150,21 +147,6 @@ class ViewWriter extends Writer {
     return this[_].html
   }
 
-  set css(css) {
-    if (!css) {
-      css = ''
-    }
-    else if (this.minify) {
-      css = cleanCSS.minify(css).styles
-    }
-
-    this[_].css = css
-  }
-
-  get css() {
-    return this[_].css
-  }
-
   set minify(minify) {
     this[_].minify = !!minify
   }
@@ -179,21 +161,7 @@ class ViewWriter extends Writer {
     this[_].children = []
     this.minify = props.minify
     this.name = props.name
-    this.css = props.css
     this.html = props.html
-  }
-
-  // Unlike the setter, this will only minify the appended CSS
-  appendCSS(css, skipLine) {
-    if (!this[_].css) {
-      this[_].css = ''
-    }
-    // Will prevent redundant line skip
-    else if (skipLine) {
-      this[_].css += '\n'
-    }
-
-    this[_].css += cleanCSS.minify(css).styles
   }
 
   write(dir) {
@@ -214,12 +182,6 @@ class ViewWriter extends Writer {
       const Appfairy = require('appfairy')
 
       class ${this.className} extends Appfairy.View(HTMLElement) {
-        initializeStyle(style) {
-          style.innerHTML = \`
-            ==>${escape(this.css, '`')}<==
-          \`
-        }
-
         initializeView(view) {
           view.innerHTML = \`
             ==>${escape(this.html, '`')}<==

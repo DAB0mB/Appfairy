@@ -30,20 +30,20 @@ class ScriptWriter extends Writer {
     return this[_].prefetch = !!prefetch
   }
 
+  get baseUrl() {
+    return this[_].baseUrl
+  }
+
+  set baseUrl(baseUrl) {
+    this[_].baseUrl = String(baseUrl)
+  }
+
   constructor(options = {}) {
     super()
 
-    this[_].scripts = [
-      {
-        type: 'code',
-        get body() {
-          return requireText(
-            '@webcomponents/webcomponentsjs/bundles/webcomponents-sd-ce-pf.js'
-          )
-        },
-      }
-    ]
+    this[_].scripts = []
 
+    this.baseUrl = options.baseUrl
     this.prefetch = options.prefetch
   }
 
@@ -66,9 +66,11 @@ class ScriptWriter extends Writer {
     const fetchingScripts = this.scripts.map(async (script, index) => {
       const scriptFileName = scriptFileNames[index]
 
-      let code = script.type == 'src'
+      let code = script.type == 'code'
+        ? script.body
+        : /^http/.test(script.body)
         ? await fetch(script.body).then(res => res.text())
-        : script.body
+        : requireText(`${this.baseUrl}/${script.body}`)
       code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
       code = freeContext(code)
 
@@ -123,15 +125,13 @@ class ScriptWriter extends Writer {
     }).join('\n')
 
     return freeLint(`
-      const Appfairy = require('appfairy')
-
       const scripts = [
         ==>${scripts}<==
       ]
 
-      const loadingPromises = scripts.map((script) => {
+      const loadingScripts = scripts.map((script) => {
         const scriptEl = document.createElement('script')
-        scriptEl.setAttribute('type', 'text/javascript')
+        scriptEl.type = 'text/javascript'
 
         if (script.type == 'src') {
           scriptEl.src = script.body
@@ -146,7 +146,7 @@ class ScriptWriter extends Writer {
         })
       })
 
-      module.exports = Appfairy.loading = Promise.all(loadingPromises)
+      module.exports = Promise.all(loadingScripts)
     `)
   }
 }
