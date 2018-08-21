@@ -169,7 +169,17 @@ const setScripts = async (scriptWriter, $head) => {
 }
 
 const setStyles = async (styleWriter, $head) => {
-  const $styles = $head.find('link[rel="stylesheet"][type="text/css"]')
+  let $styles
+
+  $styles = $head.find('link[rel="stylesheet"][type="text/css"]')
+
+  $styles.each((i, style) => {
+    const $style = $head.find(style)
+
+    styleWriter.setStyle($style.attr('href'), $style.html())
+  })
+
+  $styles = $head.find('style')
 
   $styles.each((i, style) => {
     const $style = $head.find(style)
