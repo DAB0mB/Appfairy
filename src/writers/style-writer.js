@@ -14,7 +14,9 @@ import {
 } from '../utils'
 
 const _ = Symbol('_StyleWriter')
-const cleanCSS = new CleanCSS()
+const cleanCSS = new CleanCSS({
+  rebaseTo: '..'
+})
 
 @Internal(_)
 class StyleWriter extends Writer {
@@ -72,7 +74,7 @@ class StyleWriter extends Writer {
         ? await fetch(style.body).then(res => res.text())
         : await requireText.promise(`${this.baseUrl}/${style.body}`)
 
-      return fs.writeFile(`${dir}/src/styles/${styleFileName}`, sheet)
+      return fs.writeFile(`${dir}/src/styles/${styleFileName}`, cleanCSS.minify(sheet).styles)
     })
 
     const stylesIndexContent = styleFileNames.map((styleFileName) => {
@@ -100,7 +102,7 @@ class StyleWriter extends Writer {
     }
     else {
       type = 'sheet'
-      body = cleanCSS.minify(content).styles
+      body = content
     }
 
     const exists = this[_].styles.some((style) => {
@@ -113,6 +115,12 @@ class StyleWriter extends Writer {
   }
 
   _composeStyleLoader() {
+    this[_].styles.forEach((style) => {
+      if (style.type == 'sheet') {
+        style.body = cleanCSS.minify(style.body).styles
+      }
+    })
+
     const styles = this[_].styles.map((style) => {
       return freeText(`
         {
@@ -129,9 +137,16 @@ class StyleWriter extends Writer {
 
       const loadingStyles = styles.map((style) => {
         let styleEl
+        let loading
 
         if (style.type == 'href') {
           styleEl = document.createElement('link')
+
+          loading = new Promise((resolve, reject) => {
+            style.onload = resolve
+            style.onerror = reject
+          })
+
           styleEl.rel = 'stylesheet'
           styleEl.type = 'text/css'
           styleEl.href = style.body
@@ -140,14 +155,13 @@ class StyleWriter extends Writer {
           styleEl = document.createElement('style')
           styleEl.type = 'text/css'
           styleEl.innerHTML = style.body
+
+          loading = Promise.resolve()
         }
 
         document.head.appendChild(styleEl)
 
-        return new Promise((resolve, reject) => {
-          style.onload = resolve
-          style.onerror = reject
-        })
+        return loading
       })
 
       module.exports = Promise.all(loadingStyles)

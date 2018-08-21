@@ -69,7 +69,9 @@ class ScriptWriter extends Writer {
       let code = script.type == 'code'
         ? script.body
         : /^http/.test(script.body)
-        ? await fetch(script.body).then(res => res.text())
+        ? await fetch(script.body)
+          .then(res => res.text())
+          .then(text => uglify.minify(text).code)
         : requireText(`${this.baseUrl}/${script.body}`)
       code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
       code = freeContext(code)
@@ -129,26 +131,26 @@ class ScriptWriter extends Writer {
         ==>${scripts}<==
       ]
 
-      const loadingScripts = scripts.map((script) => {
-        const scriptEl = document.createElement('script')
-        scriptEl.type = 'text/javascript'
-
-        if (script.type == 'src') {
-          scriptEl.src = script.body
-        }
-        else {
-          scriptEl.innerHTML = script.body
-        }
-
-        document.head.appendChild(scriptEl)
-
+      const loadingScripts = scripts.reduce((loaded, script) => loaded.then(() => {
         return new Promise((resolve, reject) => {
-          script.onload = resolve
-          script.onerror = reject
-        })
-      })
+          const scriptEl = document.createElement('script')
+          scriptEl.type = 'text/javascript'
 
-      module.exports = Promise.all(loadingScripts)
+          scriptEl.onload = resolve
+          scriptEl.onerror = reject
+
+          if (script.type == 'src') {
+            scriptEl.src = script.body
+          }
+          else {
+            scriptEl.innerHTML = script.body
+          }
+
+          document.head.appendChild(scriptEl)
+        })
+      }), Promise.resolve())
+
+      module.exports = loadingScripts
     `)
   }
 }
