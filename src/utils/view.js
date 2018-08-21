@@ -5,14 +5,14 @@ const React = require('react')
 exports.transformProxies = (children) => {
   const proxies = {}
 
-  React.Children.forEach((child) => {
-    proxies[child.type] = Object.assign({}, child.props)
+  React.Children.forEach(children, (child) => {
+    const props = proxies[child.type] = Object.assign({}, child.props)
 
-    if (child.hasOwnProperty('key')) {
+    if (child.key != null) {
       props.key = child.key
     }
 
-    if (child.hasOwnProperty('ref')) {
+    if (child.ref != null) {
       props.ref = child.ref
     }
   })

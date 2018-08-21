@@ -210,18 +210,27 @@ function bindJSX(jsx, children = []) {
 
   // ORDER MATTERS
   return jsx
-  // Get rid of self closing tags and inline elements so we won't have any
-  // surprises in the upcoming transformations
-  .replace(/^( +)<([^/ ]+)(.*) \/>$/gm, '$1<$2$3>\n$1</$2>')
-  .replace(/^( +)<([^/ ]+)(.*)>(.+)<\/\2>$/gm, '$1<$2$3>\n$1  $4\n$1</$2>')
-  // Apply conditional rendering
-  .replace(/\n( +)<([^/ ]+)(.*) af-sock="([^"]+)" (.*)>\n\1 {2}((?:\n|.)+)\n\1<\/\2>/,
+
+  // Self closing inline tag
+  .replace(/<([^/ ]+)(.*) af-sock="([^"]+)"([^/>]*)\/>$/gm,
+  (match, tag, leftAttrs, sock, rightAttrs) => (
+    `{proxies["${sock}"] && <${tag}${leftAttrs} ${rightAttrs}{ ...proxies["${sock}"] } />}`
+  ))
+
+  // Inline tag
+  .replace(/<([^/ ]+)(.*) af-sock="([^"]+)"([^/>]*)>(.+)<\/\1>$/gm,
+  (match, tag, leftAttrs, sock, rightAttrs, content) => (
+    `{proxies["${sock}"] && <${tag}${leftAttrs} ${rightAttrs} { ...proxies["${sock}"] }> {proxies["${sock}"].children ? proxies["${sock}"].children : <React.Fragment>${content}</React.Fragment>}</${tag}>}`
+  ))
+
+  // Multiple line tag
+  .replace(/\n( +)<([^/ ]+)([^/>]*)af-sock="([^"]+)"([^/>]*)>((?:\n\1 {2})?(?:\n|.)+?)\n\1<\/\2>/g,
   (match, indent, tag, leftAttrs, sock, rightAttrs, content) => [
     '',
     `${indent}{proxies["${sock}"] && (`,
-    `${indent}  <${tag}${leftAttrs} ${rightAttrs} { ...proxies["${sock}"].props }>`,
-    `${indent}    {proxies["${sock}"].props.children ? proxies["${sock}"].props.children : <React.Fragment>`,
-    `${indent}      ${content.split('\n').map(line => `${indent}${line}`).join('\n').trim()}`,
+    `${indent}  <${tag}${leftAttrs} ${rightAttrs} { ...proxies["${sock}"] }>`,
+    `${indent}    {proxies["${sock}"].children ? proxies["${sock}"].children : <React.Fragment>`,
+    `${indent}  ${content.trim().split('\n').map(line => `    ${line}`).join('\n')}`,
     `${indent}    </React.Fragment>}`,
     `${indent}  </${tag}>`,
     `${indent})}`,
