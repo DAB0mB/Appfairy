@@ -129,7 +129,17 @@ class ViewWriter extends Writer {
     html = pretty(html)
 
     this[_].html = html
-    this[_].jsx = htmltojsx.convert(html).trim()
+
+    let jsx = htmltojsx.convert(html).trim()
+
+    children.forEach((child) => {
+      jsx = jsx.replace(
+        new RegExp(`af-${child.elName}`, 'g'),
+        `${child.className}.Controller`
+      )
+    })
+
+    this[_].jsx = jsx
   }
 
   get html() {
@@ -153,7 +163,7 @@ class ViewWriter extends Writer {
       return child.write(dir)
     })
 
-    const writingSelf = fs.writeFile(`${dir}/${this.name}.js`, this[_].compose())
+    const writingSelf = fs.writeFile(`${dir}/${this.className}.js`, this[_].compose())
 
     return Promise.all([
       ...writingChildren,
@@ -164,6 +174,7 @@ class ViewWriter extends Writer {
   _compose() {
     return freeLint(`
       const React = require('react')
+      ==>${this[_].composeChildImports()}<==
 
       class ${this.className} extends React.Component {
         render() {
@@ -175,6 +186,12 @@ class ViewWriter extends Writer {
 
       module.exports = ${this.className}
     `)
+  }
+
+  _composeChildImports() {
+    return this[_].children.map((child) => {
+      return `const ${child.className} = require('./${child.className}')`
+    }).join('\n')
   }
 }
 
