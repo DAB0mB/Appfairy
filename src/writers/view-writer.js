@@ -1,5 +1,5 @@
 import cheerio from 'cheerio'
-import htmlMinifier from 'html-minifier'
+import HTMLtoJSX from 'htmltojsx'
 import pretty from 'pretty'
 import statuses from 'statuses'
 import { fs } from '../libs'
@@ -7,7 +7,6 @@ import Writer from './writer'
 
 import {
   Internal,
-  escape,
   emptyDir,
   freeLint,
   splitWords,
@@ -15,6 +14,7 @@ import {
 } from '../utils'
 
 const _ = Symbol('_ViewWriter')
+const htmltojsx = new HTMLtoJSX({ createClass: false })
 
 const flattenChildren = (children = [], flatten = []) => {
   children.forEach((child) => {
@@ -111,7 +111,6 @@ class ViewWriter extends Writer {
       const child = new ViewWriter({
         name: elName,
         html: $el.html(),
-        minify: this.minify,
       })
 
       children.push(child)
@@ -127,39 +126,24 @@ class ViewWriter extends Writer {
     $('script').remove()
 
     html = $('body').html()
-
-    if (this.minify) {
-      html = htmlMinifier.minify(html, {
-        minifyCSS: true,
-        minifyJS: true,
-        minifyURLs: true,
-        collapseWhitespace: true,
-      })
-    }
-    else {
-      html = pretty(html)
-    }
+    html = pretty(html)
 
     this[_].html = html
+    this[_].jsx = htmltojsx.convert(html).trim()
   }
 
   get html() {
     return this[_].html
   }
 
-  set minify(minify) {
-    this[_].minify = !!minify
-  }
-
-  get minify() {
-    return this[_].minify
+  get jsx() {
+    return this[_].jsx
   }
 
   constructor(props) {
     super()
 
     this[_].children = []
-    this.minify = props.minify
     this.name = props.name
     this.html = props.html
   }
@@ -179,17 +163,15 @@ class ViewWriter extends Writer {
 
   _compose() {
     return freeLint(`
-      const Appfairy = require('appfairy')
+      const React = require('react')
 
-      class ${this.className} extends Appfairy.View(HTMLElement) {
-        initializeView(view) {
-          view.innerHTML = \`
-            ==>${escape(this.html, '`')}<==
-          \`
+      class ${this.className} extends React.Component {
+        render() {
+          return (
+            ==>${this.jsx}<==
+          )
         }
       }
-
-      Appfairy.View.define('${this.elName}', ${this.className})
 
       module.exports = ${this.className}
     `)

@@ -130,8 +130,7 @@ const transpileHTMLFile = async (
   const $body = $('body')
 
   const viewWriter = new ViewWriter({
-    name: htmlFile.split('.').slice(0, -1).join('.'),
-    minify: config.minify,
+    name: htmlFile.split('.').slice(0, -1).join('.')
   })
 
   setScripts(scriptWriter, $head)

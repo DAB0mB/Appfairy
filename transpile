@@ -12,17 +12,15 @@ let {
   input,
   output,
   config,
-  minify,
   prefetch,
 } = minimist(process.argv.slice(2), {
   string: ['input', 'output', 'config'],
-  boolean: ['minify', 'prefetch'],
+  boolean: ['prefetch'],
   alias: {
     in: 'input',
     out: 'output',
   },
   default: {
-    minify: false,
     prefetch: false,
     input: `${root}/.appfairy/in`,
     output: `${root}/.appfairy/out`,
@@ -41,7 +39,6 @@ catch (e) {
 }
 
 const configBase = {
-  minify,
   prefetch,
   input,
   output,
