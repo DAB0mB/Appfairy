@@ -135,8 +135,16 @@ class ViewWriter extends Writer {
 
     this[_].html = html
 
+    $('[af-sock]').each((i, el) => {
+      const $el = $(el)
+      const socketName = $el.attr('af-sock')
+      $el.attr('af-sock', null)
+      // Workaround would help identify the closing tag
+      el.tagName += `-af-sock-${socketName}`
+    })
+
     // Transforming HTML into JSX
-    let jsx = htmltojsx.convert(html).trim()
+    let jsx = htmltojsx.convert($('body').html()).trim()
     // Bind controller to view
     this[_].jsx = bindJSX(jsx, children)
   }
@@ -210,31 +218,10 @@ function bindJSX(jsx, children = []) {
 
   // ORDER MATTERS
   return jsx
-
-  // Self closing inline tag
-  .replace(/<([^/ ]+)(.*) af-sock="([^"]+)"([^/>]*)\/>$/gm,
-  (match, tag, leftAttrs, sock, rightAttrs) => (
-    `{proxies["${sock}"] && <${tag}${leftAttrs} ${rightAttrs}{ ...proxies["${sock}"] } />}`
-  ))
-
-  // Inline tag
-  .replace(/<([^/ ]+)(.*) af-sock="([^"]+)"([^/>]*)>(.+)<\/\1>$/gm,
-  (match, tag, leftAttrs, sock, rightAttrs, content) => (
-    `{proxies["${sock}"] && <${tag}${leftAttrs} ${rightAttrs} { ...proxies["${sock}"] }> {proxies["${sock}"].children ? proxies["${sock}"].children : <React.Fragment>${content}</React.Fragment>}</${tag}>}`
-  ))
-
-  // Multiple line tag
-  .replace(/\n( +)<([^/ ]+)([^/>]*)af-sock="([^"]+)"([^/>]*)>((?:\n\1 {2})?(?:\n|.)+?)\n\1<\/\2>/g,
-  (match, indent, tag, leftAttrs, sock, rightAttrs, content) => [
-    '',
-    `${indent}{proxies["${sock}"] && (`,
-    `${indent}  <${tag}${leftAttrs} ${rightAttrs} { ...proxies["${sock}"] }>`,
-    `${indent}    {proxies["${sock}"].children ? proxies["${sock}"].children : <React.Fragment>`,
-    `${indent}  ${content.trim().split('\n').map(line => `    ${line}`).join('\n')}`,
-    `${indent}    </React.Fragment>}`,
-    `${indent}  </${tag}>`,
-    `${indent})}`,
-  ].join('\n'))
+    // Open close
+    .replace(/<([\w._-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g, `{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children ? proxies['$2'].children : <React.Fragment>$4</React.Fragment>}</$1>}`)
+    // Self closing
+    .replace(/<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g, `{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children}</$1>}`)
 }
 
 export default ViewWriter
