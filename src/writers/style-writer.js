@@ -1,6 +1,7 @@
 import CleanCSS from 'clean-css'
 import csstree from 'css-tree'
 import fetch from 'node-fetch'
+import path from 'path'
 import { fs } from '../libs'
 import Writer from './writer'
 
@@ -99,7 +100,7 @@ class StyleWriter extends Writer {
 
     if (href) {
       type = 'href'
-      body = href
+      body = /^\w+:\/\//.test(href) ? href : path.resolve('/', href)
     }
     else {
       type = 'sheet'

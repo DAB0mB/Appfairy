@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import path from 'path'
 import uglify from 'uglify-js'
 import { fs } from '../libs'
 import Writer from './writer'
@@ -100,7 +101,7 @@ class ScriptWriter extends Writer {
 
     if (src) {
       type = 'src'
-      body = src
+      body = /^\w+:\/\//.test(src) ? src : path.resolve('/', src)
     }
     else {
       type = 'code'
