@@ -1,4 +1,5 @@
 import CleanCSS from 'clean-css'
+import csstree from 'css-tree'
 import fetch from 'node-fetch'
 import { fs } from '../libs'
 import Writer from './writer'
@@ -74,7 +75,7 @@ class StyleWriter extends Writer {
         ? await fetch(style.body).then(res => res.text())
         : await requireText.promise(`${this.baseUrl}/${style.body}`)
 
-      return fs.writeFile(`${dir}/src/styles/${styleFileName}`, cleanCSS.minify(sheet).styles)
+      return fs.writeFile(`${dir}/src/styles/${styleFileName}`, transformSheet(sheet))
     })
 
     const stylesIndexContent = styleFileNames.map((styleFileName) => {
@@ -117,7 +118,7 @@ class StyleWriter extends Writer {
   _composeStyleLoader() {
     this[_].styles.forEach((style) => {
       if (style.type == 'sheet') {
-        style.body = cleanCSS.minify(style.body).styles
+        style.body = transformSheet(style.body)
       }
     })
 
@@ -143,8 +144,8 @@ class StyleWriter extends Writer {
           styleEl = document.createElement('link')
 
           loading = new Promise((resolve, reject) => {
-            style.onload = resolve
-            style.onerror = reject
+            styleEl.onload = resolve
+            styleEl.onerror = reject
           })
 
           styleEl.rel = 'stylesheet'
@@ -164,9 +165,40 @@ class StyleWriter extends Writer {
         return loading
       })
 
-      module.exports = Promise.all(loadingStyles)
+      module.exports = Promise.all(loadingStyles).then(() => {
+        const styleSheets = Array.from(document.styleSheets).filter((styleSheet) => {
+          return styleSheet.href && styles.some((style) => {
+            return style.type == 'href' && styleSheet.href.match(style.body)
+          })
+        })
+
+        styleSheets.forEach((styleSheet) => {
+          Array.from(styleSheet.rules).forEach((rule) => {
+            if (rule.selectorText) {
+              rule.selectorText = rule.selectorText
+                .replace(/\\.([\\w_-]+)/g, '.__af-$1')
+                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2__af-$3$4"]')
+            }
+          })
+        })
+      })
     `)
   }
+}
+
+// Will minify and encapsulate classes
+function transformSheet(sheet) {
+  const ast = csstree.parse(sheet)
+
+  csstree.walk(ast, (node) => {
+    if (node.type == 'ClassSelector') {
+      node.name = `__af-${node.name}`;
+    }
+  })
+
+  sheet = csstree.generate(ast)
+
+  return cleanCSS.minify(sheet).styles
 }
 
 export default StyleWriter

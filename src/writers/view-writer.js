@@ -1,4 +1,5 @@
 import cheerio from 'cheerio'
+import csstree from 'css-tree'
 import HTMLtoJSX from 'htmltojsx'
 import path from 'path'
 import pretty from 'pretty'
@@ -95,6 +96,31 @@ class ViewWriter extends Writer {
 
     const children = this[_].children = []
     const $ = cheerio.load(html)
+
+    // Encapsulate styles
+    $('style').each((i, el) => {
+      const $el = $(el)
+      const ast = csstree.parse($el.html())
+
+      csstree.walk(ast, (node) => {
+        if (node.type == 'ClassSelector') {
+          node.name = `__af-${node.name}`;
+        }
+      })
+
+      $el.html(csstree.generate(ast))
+    })
+
+    $('*').each((i, el) => {
+      const $el = $(el)
+      let className = $el.attr('class')
+
+      if (className && !/__af-/.test(className)) {
+        className = className.replace(/([\w_-]+)/g, '__af-$1')
+        $el.attr('class', className)
+      }
+    })
+
     let el = $('[af-el]')[0]
 
     while (el) {
@@ -211,7 +237,7 @@ class ViewWriter extends Writer {
 function bindJSX(jsx, children = []) {
   children.forEach((child) => {
     jsx = jsx.replace(
-      new RegExp(`af-${child.elName}`, 'g'),
+      new RegExp(`(?<!__)af-${child.elName}`, 'g'),
       `${child.className}.Controller`
     )
   })
@@ -219,9 +245,15 @@ function bindJSX(jsx, children = []) {
   // ORDER MATTERS
   return jsx
     // Open close
-    .replace(/<([\w._-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g, `{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children ? proxies['$2'].children : <React.Fragment>$4</React.Fragment>}</$1>}`)
+    .replace(
+      /<([\w._-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g,
+      "{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children ? proxies['$2'].children : <React.Fragment>$4</React.Fragment>}</$1>}"
+    )
     // Self closing
-    .replace(/<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g, `{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children}</$1>}`)
+    .replace(
+      /<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g,
+      "{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children}</$1>}"
+    )
 }
 
 export default ViewWriter
