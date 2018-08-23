@@ -132,22 +132,27 @@ class ScriptWriter extends Writer {
       ]
 
       const loadingScripts = scripts.reduce((loaded, script) => loaded.then(() => {
-        return new Promise((resolve, reject) => {
-          const scriptEl = document.createElement('script')
-          scriptEl.type = 'text/javascript'
+        const scriptEl = document.createElement('script')
+        scriptEl.type = 'text/javascript'
+        let loading
 
-          scriptEl.onload = resolve
-          scriptEl.onerror = reject
+        if (script.type == 'src') {
+          scriptEl.src = script.body
 
-          if (script.type == 'src') {
-            scriptEl.src = script.body
-          }
-          else {
-            scriptEl.innerHTML = script.body
-          }
+          loading = new Promise((resolve, reject) => {
+            scriptEl.onload = resolve
+            scriptEl.onerror = reject
+          })
+        }
+        else {
+          scriptEl.innerHTML = script.body
 
-          document.head.appendChild(scriptEl)
-        })
+          loading = Promise.resolve()
+        }
+
+        document.head.appendChild(scriptEl)
+
+        return loading
       }), Promise.resolve())
 
       module.exports = loadingScripts
