@@ -224,7 +224,9 @@ class ViewWriter extends Writer {
 
       class ${this.className} extends React.Component {
         static get Controller() {
-          return require('${ctrlsDir}/${this.ctrlClassName}')
+          const exports = require('${ctrlsDir}/${this.ctrlClassName}')
+
+          return exports.default || exports
         }
 
         render() {
