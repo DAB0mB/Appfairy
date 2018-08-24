@@ -28,17 +28,20 @@ export const add = async (files) => {
 }
 
 // Will commit changes, and if files not exist, will print status
-export const commit = (files, message, stdio = 'inherit') => {
-  if (files && files.length) {
-    return execa('git', ['commit', '-m', `appfairy: ${message}`], {
+export const commit = async (files, message, stdio = 'inherit') => {
+  if (files && files.length) try {
+    await execa('git', ['commit', '-m', `appfairy: ${message}`], {
       stdio,
     })
   }
-  else {
-    return execa('git', ['status'], {
-      stdio,
-    })
+  catch (e) {
+    // Probably no changes were made
+    return
   }
+
+  execa('git', ['status'], {
+    stdio,
+  })
 }
 
 export const removeAppfairyFiles = async () => {

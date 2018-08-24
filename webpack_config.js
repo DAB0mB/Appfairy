@@ -9,7 +9,7 @@ module.exports = {
   ],
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'appfairy-webflow-transpiler.js',
+    filename: 'appfairy.js',
     library: '',
     libraryTarget: 'commonjs2'
   },
