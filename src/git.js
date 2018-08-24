@@ -62,8 +62,9 @@ export const removeAppfairyFiles = async () => {
   // No previous migrations found
   if (!hash) return []
 
+  // List all files but deleted ones
   let { stdout: files } = await execa('git', [
-    'diff', '--name-only', hash, `${hash}~1`
+    'diff', '--name-only', '--diff-filter=ACMRTUXB', `${hash}~1`, hash
   ])
   files = files.split('\n').filter(Boolean)
 
