@@ -7,7 +7,6 @@ import Writer from './writer'
 
 import {
   Internal,
-  emptyDir,
   escape,
   freeText,
   freeLint,
@@ -57,14 +56,20 @@ class StyleWriter extends Writer {
       prefetch: this.prefetch,
     }
 
-    await emptyDir(`${dir}/src/styles`)
+    const indexFilePath = `${dir}/index.js`
+    const childFilePaths = [indexFilePath]
 
     if (!options.prefetch) {
-      return fs.writeFile(`${dir}/src/styles/index.js`, this[_].composeStyleLoader())
+      await fs.writeFile(indexFilePath, this[_].composeStyleLoader())
+      return childFilePaths
     }
 
     const styleFileNames = this.styles.map((style, index, { length }) => {
-      return padLeft(index, length / 10 + 1, 0) + '.css'
+      const fileName = padLeft(index, length / 10 + 1, 0) + '.css'
+      const filePath = `${dir}/${fileName}`
+      childFilePaths.push(filePath)
+
+      return fileName
     })
 
     const fetchingStyles = this.styles.map(async (style, index) => {
@@ -76,7 +81,7 @@ class StyleWriter extends Writer {
         ? await fetch(style.body).then(res => res.text())
         : await requireText.promise(`${this.baseUrl}/${style.body}`)
 
-      return fs.writeFile(`${dir}/src/styles/${styleFileName}`, transformSheet(sheet))
+      return fs.writeFile(`${dir}/${styleFileName}`, transformSheet(sheet))
     })
 
     const stylesIndexContent = styleFileNames.map((styleFileName) => {
@@ -84,14 +89,16 @@ class StyleWriter extends Writer {
     }).join('\n')
 
     const writingIndex = fs.writeFile(
-      `${dir}/src/styles/index.js`,
+      indexFilePath,
       freeLint(stylesIndexContent),
     )
 
-    return Promise.all([
+    await Promise.all([
       ...fetchingStyles,
       writingIndex,
     ])
+
+    return childFilePaths
   }
 
   setStyle(href, content) {

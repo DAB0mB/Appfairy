@@ -1,11 +1,11 @@
 {
-  "name": "appfairy-webflow-transpiler",
+  "name": "appfairy",
   "private": true,
   "version": "0.1.0",
   "description": "An executable which will transpile Webflow assets into Appfairy elements",
-  "main": "build/appfairy-webflow-transpiler.js",
+  "main": "build/appfairy.js",
   "bin": {
-    "af-transpile": "transpile"
+    "appfairy": "appfairy"
   },
   "scripts": {
     "build": "webpack --config webpack_config.js",
@@ -15,6 +15,7 @@
     "cheerio": "^1.0.0-rc.2",
     "clean-css": "^4.1.11",
     "css-tree": "^1.0.0-alpha.29",
+    "execa": "^0.11.0",
     "find-root": "^1.1.0",
     "htmltojsx": "^0.3.0",
     "minimist": "^1.2.0",

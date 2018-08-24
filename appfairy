@@ -1,0 +1,104 @@
+#!/usr/bin/env node
+
+const { transpile } = require('.')
+const findRoot = require('find-root')
+const fs = require('fs')
+const minimist = require('minimist')
+const path = require('path')
+
+const root = findRoot(process.cwd())
+
+let {
+  input,
+  config,
+  prefetch,
+} = minimist(process.argv.slice(2), {
+  string: ['input', 'config'],
+  boolean: ['prefetch'],
+  alias: {
+    in: 'input',
+  },
+  default: {
+    prefetch: false,
+    input: `${root}/.appfairy`,
+  },
+})
+
+if (config) {
+  config = path.resolve(process.cwd(), config)
+}
+else try {
+  fs.statSync(`${root}/af_config.js`)
+  config = `${root}/af_config.js`
+}
+catch (e) {
+  // File in default path not exist
+}
+
+const configBase = {
+  prefetch,
+  input,
+  // Preserve original path
+  __dirname: path.dirname(config),
+}
+
+if (config) {
+  // Will throw an error if file not exist
+  config = Object.assign(configBase, require(config))
+}
+else {
+  config = configBase
+}
+
+// Validate config.output schema
+if (typeof config.output != 'object') {
+  throw TypeError('config.output must be an object')
+}
+if (typeof config.output.public != 'string') {
+  throw TypeError('config.output.public must be a string')
+}
+if (typeof config.output.src == 'string') {
+  config.output.src = {
+    scripts: `${config.output.src}/scripts`,
+    styles: `${config.output.src}/styles`,
+    views: `${config.output.src}/views`,
+    controllers: `${config.output.src}/controllers`,
+  }
+}
+if (typeof config.output.src != 'object') {
+  throw TypeError('config.output.src must be an object or a string')
+}
+if (typeof config.output.src != 'object') {
+  throw TypeError('config.output.src must be an object')
+}
+if (typeof config.output.src.scripts != 'string') {
+  throw TypeError('config.output.src.scripts must be a string')
+}
+if (typeof config.output.src.styles != 'string') {
+  throw TypeError('config.output.src.styles must be a string')
+}
+if (typeof config.output.src.views != 'string') {
+  throw TypeError('config.output.src.views must be a string')
+}
+if (typeof config.output.src.controllers != 'string') {
+  throw TypeError('config.output.src.controllers must be a string')
+}
+
+config.input = path.resolve(config.__dirname, config.input)
+config.output = {
+  public: path.resolve(config.__dirname, config.output.public),
+  src: {
+    scripts: path.resolve(config.__dirname, config.output.src.scripts),
+    styles: path.resolve(config.__dirname, config.output.src.styles),
+    views: path.resolve(config.__dirname, config.output.src.views),
+    controllers: path.resolve(config.__dirname, config.output.src.controllers),
+  }
+}
+
+transpile(config).catch((errs) => {
+  errs = [].concat(errs)
+
+  errs.forEach((err) => {
+    console.error(err)
+  })
+})

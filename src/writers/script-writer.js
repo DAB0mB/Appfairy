@@ -6,7 +6,6 @@ import Writer from './writer'
 
 import {
   Internal,
-  emptyDir,
   escape,
   freeText,
   freeLint,
@@ -54,14 +53,20 @@ class ScriptWriter extends Writer {
       prefetch: this.prefetch,
     }
 
-    await emptyDir(`${dir}/src/scripts`)
+    const indexFilePath = `${dir}/index.js`
+    const childFilePaths = [indexFilePath]
 
     if (!options.prefetch) {
-      return fs.writeFile(`${dir}/src/scripts/index.js`, this[_].composeScriptLoader())
+      await fs.writeFile(indexFilePath, this[_].composeScriptLoader())
+      return childFilePaths
     }
 
     const scriptFileNames = this.scripts.map((script, index, { length }) => {
-      return padLeft(index, length / 10 + 1, 0) + '.js'
+      const fileName = padLeft(index, length / 10 + 1, 0) + '.js'
+      const filePath = `${dir}/${fileName}`
+      childFilePaths.push(filePath)
+
+      return fileName
     })
 
     const fetchingScripts = this.scripts.map(async (script, index) => {
@@ -77,7 +82,7 @@ class ScriptWriter extends Writer {
       code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
       code = freeContext(code)
 
-      return fs.writeFile(`${dir}/src/scripts/${scriptFileName}`, code)
+      return fs.writeFile(`${dir}/${scriptFileName}`, code)
     })
 
     const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
@@ -85,14 +90,16 @@ class ScriptWriter extends Writer {
     }).join('\n')
 
     const writingIndex = fs.writeFile(
-      `${dir}/src/scripts/index.js`,
+      indexFilePath,
       freeLint(scriptsIndexContent),
     )
 
-    return Promise.all([
+    await Promise.all([
       ...fetchingScripts,
       writingIndex,
     ])
+
+    return childFilePaths
   }
 
   setScript(src, content) {
