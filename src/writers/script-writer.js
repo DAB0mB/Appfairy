@@ -57,7 +57,8 @@ class ScriptWriter extends Writer {
     const childFilePaths = [indexFilePath]
 
     if (!options.prefetch) {
-      return fs.writeFile(indexFilePath, this[_].composeScriptLoader())
+      await fs.writeFile(indexFilePath, this[_].composeScriptLoader())
+      return childFilePaths
     }
 
     const scriptFileNames = this.scripts.map((script, index, { length }) => {

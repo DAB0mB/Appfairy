@@ -60,7 +60,8 @@ class StyleWriter extends Writer {
     const childFilePaths = [indexFilePath]
 
     if (!options.prefetch) {
-      return fs.writeFile(indexFilePath, this[_].composeStyleLoader())
+      await fs.writeFile(indexFilePath, this[_].composeStyleLoader())
+      return childFilePaths
     }
 
     const styleFileNames = this.styles.map((style, index, { length }) => {
