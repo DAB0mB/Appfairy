@@ -1,13 +1,11 @@
-import rimraf from 'rimraf'
-import { promisify } from 'util'
-import { fs } from '../libs'
+import { fs, rimraf } from '../libs'
 
 export { default as Internal } from './internal'
 export { default as requireText } from './requireText'
 
 // Ensure dir exists and is empty
 export const emptyDir = async (dir) => {
-  await promisify(rimraf)(dir)
+  await rimraf(dir)
 
   return fs.mkdir(dir)
 }
@@ -20,7 +18,7 @@ export const escape = (str, quote) => {
     case "'": return str.replace(/'/g, "\\'")
     case '"': return str.replace(/"/g, '\\"')
     case '`': return str.replace(/`/g, '\\`')
-    default: str
+    default: return str
       .replace(/'/g, "\\'")
       .replace(/"/g, '\\"')
       .replace(/`/g, '\\`')
@@ -101,4 +99,11 @@ export const padLeft = (str, length, char = ' ') => {
   length = parseInt(length + 1 - str.length)
 
   return Array(length).join(char) + str
+}
+
+// Get deep property e.g. 'foo.bar.baz'
+export const get = (obj, keys) => {
+  return keys.reduce((obj, key) => {
+    return obj[key]
+  }, obj)
 }

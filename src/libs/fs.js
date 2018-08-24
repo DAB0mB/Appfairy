@@ -5,6 +5,7 @@ export const mkdir = promisify(fs.mkdir)
 export const readdir = promisify(fs.readdir)
 export const readFile = promisify(fs.readFile)
 export const stat = promisify(fs.stat)
+export const unlink = promisify(fs.unlink)
 export const writeFile = promisify(fs.writeFile)
 
 export const exists = (path) => {
@@ -16,10 +17,11 @@ export const exists = (path) => {
 }
 
 export default {
+  exists,
   mkdir,
   readdir,
   readFile,
   stat,
+  unlink,
   writeFile,
-  exists,
 }

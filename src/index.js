@@ -1,97 +1,148 @@
 import cheerio from 'cheerio'
 import path from 'path'
-import { ViewWriter, ScriptWriter } from './writers'
-import { fs, ncp } from './libs'
-import { emptyDir, freeLint } from './utils'
+import { fs, ncp, reread } from './libs'
+import { emptyDir, freeLint, get } from './utils'
+import { ViewWriter, ScriptWriter, StyleWriter } from './writers'
 
-export const transpile = async (inputDir, outputDir, options = {}) => {
-  let files
+export const transpile = async (config) => {
+  let inputFiles
+  let outputFiles
 
   await Promise.all([
-    fs.readdir(inputDir).then((result) => {
-      files = result
+    fs.readdir(config.input).then((files) => {
+      inputFiles = files
     }),
-    fs.exists(outputDir).then((exists) => {
-      if (exists) {
-        // Removing dir is dangerous, so we will just print a warning and exit
-        console.error(`Output directory ${outputDir} already exists`)
-        process.exit(1)
-      }
-
-      return fs.mkdir(outputDir)
-    }).then(() => {
-      return fs.mkdir(`${outputDir}/src`)
-    })
+    emptyOutputDir(config).then((files) => {
+      outputFiles = files
+    }),
   ])
 
-  const writingIndex = fs.writeFile(`${outputDir}/src/index.js`, freeLint(`
+  const writingIndex = fs.writeFile(`${config.output}/src/index.js`, freeLint(`
     require('./views')
     require('./scripts')
+    require('./styles')
   `))
 
-  const htmlFiles = files.filter(file => path.extname(file) == '.html')
-  const publicSubDirs = files.filter(file => !htmlFiles.includes(file))
+  const htmlFiles = inputFiles.filter(file => path.extname(file) == '.html')
+  const publicSubDirs = inputFiles.filter(file => !htmlFiles.includes(file))
 
   const scriptWriter = new ScriptWriter({
-    prefetch: options.prefetch
+    baseUrl: config.input,
+    prefetch: config.prefetch,
+  })
+
+  const styleWriter = new StyleWriter({
+    baseUrl: config.input,
+    prefetch: config.prefetch
   })
 
   const transpilingHTMLFiles = htmlFiles.map((htmlFile) => {
     return transpileHTMLFile(
-      inputDir,
-      outputDir,
+      config,
       htmlFile,
       scriptWriter,
-      options,
+      styleWriter,
     )
   })
 
   const writingFiles = Promise.all(transpilingHTMLFiles).then((viewWriters) => {
     return Promise.all([
-      ViewWriter.writeAll(viewWriters, outputDir),
-      scriptWriter.write(outputDir),
+      ViewWriter.writeAll(viewWriters, config.output),
+      scriptWriter.write(config.output),
+      styleWriter.write(config.output),
     ])
   })
 
   const makingPublicDir = makePublicDir(
-    inputDir,
-    outputDir,
+    config,
     publicSubDirs,
   )
 
-  return Promise.all([
+  await Promise.all([
     writingIndex,
     writingFiles,
     makingPublicDir,
   ])
+
+  if (!config.map) {
+    return
+  }
+
+  const mapping = []
+
+  mapping.push(mapOutput(config, outputFiles, 'public'))
+  mapping.push(mapOutput(config, outputFiles, 'src', 'views'))
+  mapping.push(mapOutput(config, outputFiles, 'src', 'scripts'))
+  mapping.push(mapOutput(config, outputFiles, 'src', 'styles'))
+
+  return Promise.all(mapping)
+}
+
+// Will retrieve a list of all files in the old output dir before emptying it
+const emptyOutputDir = async (config) => {
+  const files = {
+    public: [],
+    src: {
+      views: [],
+      scripts: [],
+      styles: [],
+    },
+  }
+
+  if (config.map) try {
+    await Promise.all([
+      config.map.public &&
+      reread(`${config.output}/public`).then(publicFiles => {
+        files.public = publicFiles.map(file => path.relative(config.output, file))
+      }),
+      config.map.src.views &&
+      reread(`${config.output}/src/views`).then(viewFiles => {
+        files.src.views = viewFiles.map(file => path.relative(config.output, file))
+      }),
+      config.map.src.scripts &&
+      reread(`${config.output}/src/scripts`).then(scriptFiles => {
+        files.src.scripts = scriptFiles.map(file => path.relative(config.output, file))
+      }),
+      config.map.src.styles &&
+      reread(`${config.output}/src/styles`).then(styleFiles => {
+        files.src.styles = styleFiles.map(file => path.relative(config.output, file))
+      }),
+    ])
+  }
+  catch (e) {
+    // Not exist
+  }
+
+  await emptyDir(config.output)
+  await fs.mkdir(`${config.output}/src`)
+
+  return files
 }
 
 const transpileHTMLFile = async (
-  inputDir,
-  outputDir,
+  config,
   htmlFile,
   scriptWriter,
-  options,
+  styleWriter,
 ) => {
-  const html = (await fs.readFile(`${inputDir}/${htmlFile}`)).toString()
+  const html = (await fs.readFile(`${config.input}/${htmlFile}`)).toString()
   const $ = cheerio.load(html)
   const $head = $('head')
   const $body = $('body')
 
   const viewWriter = new ViewWriter({
-    name: htmlFile.split('.').slice(0, -1).join('.'),
-    minify: options.minify,
+    name: htmlFile.split('.').slice(0, -1).join('.')
   })
 
   setScripts(scriptWriter, $head)
-  appendCSSSheets(viewWriter, $head)
+  setStyles(styleWriter, $head)
   setHTML(viewWriter, $body)
 
   return viewWriter
 }
 
-const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
-  const publicDir = `${outputDir}/public`
+const makePublicDir = async (config, publicSubDirs) => {
+  const publicDir = `${config.output}/public`
 
   await emptyDir(publicDir)
 
@@ -100,7 +151,7 @@ const makePublicDir = async (inputDir, outputDir, publicSubDirs) => {
   })
   .map((publicSubDir) => {
     return ncp(
-      `${inputDir}/${publicSubDir}`,
+      `${config.input}/${publicSubDir}`,
       `${publicDir}/${publicSubDir}`,
     )
   })
@@ -118,16 +169,47 @@ const setScripts = async (scriptWriter, $head) => {
   })
 }
 
-const appendCSSSheets = async (viewWriter, $head) => {
-  const $links = $head.find('link[rel="stylesheet"][type="text/css"]')
+const setStyles = async (styleWriter, $head) => {
+  let $styles
 
-  $links.each((i, link) => {
-    const href = $head.find(link).attr('href')
+  $styles = $head.find('link[rel="stylesheet"][type="text/css"]')
 
-    viewWriter.appendCSS(`@import "${href}";`, true)
+  $styles.each((i, style) => {
+    const $style = $head.find(style)
+
+    styleWriter.setStyle($style.attr('href'), $style.html())
+  })
+
+  $styles = $head.find('style')
+
+  $styles.each((i, style) => {
+    const $style = $head.find(style)
+
+    styleWriter.setStyle($style.attr('href'), $style.html())
   })
 }
 
 const setHTML = (viewWriter, $body) => {
   viewWriter.html = $body.html()
+}
+
+// Remove old files and copy output sub-dirs based on map config
+const mapOutput = async (config, files, ...dirs) => {
+  files = get(files, dirs)
+  const value = get(config.map, dirs)
+  const src = path.resolve(config.output, ...dirs)
+  const dst = path.resolve(config.__dirname, value)
+
+  const removeingOldFiles = files.map(async (file) => {
+    try {
+      await fs.unlink(path.resolve(dst, file))
+    }
+    catch (e) {
+      // Not exists
+    }
+  })
+
+  await Promise.all(removeingOldFiles)
+
+  return ncp(src, dst)
 }

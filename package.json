@@ -12,14 +12,16 @@
     "prepublish": "npm run build"
   },
   "dependencies": {
-    "@webcomponents/webcomponentsjs": "^2.0.3",
     "cheerio": "^1.0.0-rc.2",
     "clean-css": "^4.1.11",
-    "html-minifier": "^3.5.19",
+    "css-tree": "^1.0.0-alpha.29",
+    "find-root": "^1.1.0",
+    "htmltojsx": "^0.3.0",
     "minimist": "^1.2.0",
     "ncp": "^2.0.0",
     "node-fetch": "^2.1.2",
     "pretty": "^2.0.0",
+    "recursive-readdir": "^2.2.2",
     "resolve": "^1.8.1",
     "rimraf": "^2.6.2",
     "statuses": "^1.5.0",

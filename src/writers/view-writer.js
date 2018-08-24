@@ -1,22 +1,24 @@
 import cheerio from 'cheerio'
-import CleanCSS from 'clean-css'
-import htmlMinifier from 'html-minifier'
+import csstree from 'css-tree'
+import HTMLtoJSX from 'htmltojsx'
+import path from 'path'
 import pretty from 'pretty'
 import statuses from 'statuses'
 import { fs } from '../libs'
 import Writer from './writer'
 
 import {
-  Internal,
-  escape,
   emptyDir,
   freeLint,
+  Internal,
+  requireText,
   splitWords,
   upperFirst,
 } from '../utils'
 
 const _ = Symbol('_ViewWriter')
-const cleanCSS = new CleanCSS({ inline: false })
+const htmltojsx = new HTMLtoJSX({ createClass: false })
+const viewUtils = requireText(path.resolve(__dirname, '../src/utils/view.js'))
 
 const flattenChildren = (children = [], flatten = []) => {
   children.forEach((child) => {
@@ -42,14 +44,16 @@ class ViewWriter extends Writer {
     })
 
     const index = viewWriters.map((viewWriter) => {
-      return `exports.${viewWriter.className} = require('./${viewWriter.name}')`
+      return `exports.${viewWriter.className} = require('./${viewWriter.className}')`
     }).join('\n')
 
     const writingIndex = fs.writeFile(`${dir}/index.js`, freeLint(index))
+    const writingUtils = fs.writeFile(`${dir}/utils.js`, viewUtils)
 
     return Promise.all([
       ...writingViews,
       writingIndex,
+      writingUtils,
     ])
   }
 
@@ -92,6 +96,31 @@ class ViewWriter extends Writer {
 
     const children = this[_].children = []
     const $ = cheerio.load(html)
+
+    // Encapsulate styles
+    $('style').each((i, el) => {
+      const $el = $(el)
+      const ast = csstree.parse($el.html())
+
+      csstree.walk(ast, (node) => {
+        if (node.type == 'ClassSelector') {
+          node.name = `__af-${node.name}`;
+        }
+      })
+
+      $el.html(csstree.generate(ast))
+    })
+
+    $('*').each((i, el) => {
+      const $el = $(el)
+      let className = $el.attr('class')
+
+      if (className && !/__af-/.test(className)) {
+        className = className.replace(/([\w_-]+)/g, '__af-$1')
+        $el.attr('class', className)
+      }
+    })
+
     let el = $('[af-el]')[0]
 
     while (el) {
@@ -113,8 +142,6 @@ class ViewWriter extends Writer {
       const child = new ViewWriter({
         name: elName,
         html: $el.html(),
-        css: this.css,
-        minify: this.minify,
       })
 
       children.push(child)
@@ -130,70 +157,38 @@ class ViewWriter extends Writer {
     $('script').remove()
 
     html = $('body').html()
-
-    if (this.minify) {
-      html = htmlMinifier.minify(html, {
-        minifyCSS: true,
-        minifyJS: true,
-        minifyURLs: true,
-        collapseWhitespace: true,
-      })
-    }
-    else {
-      html = pretty(html)
-    }
+    html = pretty(html)
 
     this[_].html = html
+
+    $('[af-sock]').each((i, el) => {
+      const $el = $(el)
+      const socketName = $el.attr('af-sock')
+      $el.attr('af-sock', null)
+      // Workaround would help identify the closing tag
+      el.tagName += `-af-sock-${socketName}`
+    })
+
+    // Transforming HTML into JSX
+    let jsx = htmltojsx.convert($('body').html()).trim()
+    // Bind controller to view
+    this[_].jsx = bindJSX(jsx, children)
   }
 
   get html() {
     return this[_].html
   }
 
-  set css(css) {
-    if (!css) {
-      css = ''
-    }
-    else if (this.minify) {
-      css = cleanCSS.minify(css).styles
-    }
-
-    this[_].css = css
-  }
-
-  get css() {
-    return this[_].css
-  }
-
-  set minify(minify) {
-    this[_].minify = !!minify
-  }
-
-  get minify() {
-    return this[_].minify
+  get jsx() {
+    return this[_].jsx
   }
 
   constructor(props) {
     super()
 
     this[_].children = []
-    this.minify = props.minify
     this.name = props.name
-    this.css = props.css
     this.html = props.html
-  }
-
-  // Unlike the setter, this will only minify the appended CSS
-  appendCSS(css, skipLine) {
-    if (!this[_].css) {
-      this[_].css = ''
-    }
-    // Will prevent redundant line skip
-    else if (skipLine) {
-      this[_].css += '\n'
-    }
-
-    this[_].css += cleanCSS.minify(css).styles
   }
 
   write(dir) {
@@ -201,7 +196,7 @@ class ViewWriter extends Writer {
       return child.write(dir)
     })
 
-    const writingSelf = fs.writeFile(`${dir}/${this.name}.js`, this[_].compose())
+    const writingSelf = fs.writeFile(`${dir}/${this.className}.js`, this[_].compose())
 
     return Promise.all([
       ...writingChildren,
@@ -211,27 +206,54 @@ class ViewWriter extends Writer {
 
   _compose() {
     return freeLint(`
-      const Appfairy = require('appfairy')
+      const React = require('react')
+      ==>${this[_].composeChildImports()}<==
 
-      class ${this.className} extends Appfairy.View(HTMLElement) {
-        initializeStyle(style) {
-          style.innerHTML = \`
-            ==>${escape(this.css, '`')}<==
-          \`
-        }
+      class ${this.className} extends React.Component {
+        render() {
+          const proxies = transformProxies(this.props.children)
 
-        initializeView(view) {
-          view.innerHTML = \`
-            ==>${escape(this.html, '`')}<==
-          \`
+          return (
+            ==>${this.jsx}<==
+          )
         }
       }
-
-      Appfairy.View.define('${this.elName}', ${this.className})
 
       module.exports = ${this.className}
     `)
   }
+
+  _composeChildImports() {
+    const imports = this[_].children.map((child) => {
+      return `const ${child.className} = require('./${child.className}')`
+    })
+
+    imports.push(`const { transformProxies } = require('./utils')`)
+
+    return imports.join('\n')
+  }
+}
+
+function bindJSX(jsx, children = []) {
+  children.forEach((child) => {
+    jsx = jsx.replace(
+      new RegExp(`(?<!__)af-${child.elName}`, 'g'),
+      `${child.className}.Controller`
+    )
+  })
+
+  // ORDER MATTERS
+  return jsx
+    // Open close
+    .replace(
+      /<([\w._-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g,
+      "{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children ? proxies['$2'].children : <React.Fragment>$4</React.Fragment>}</$1>}"
+    )
+    // Self closing
+    .replace(
+      /<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g,
+      "{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children}</$1>}"
+    )
 }
 
 export default ViewWriter

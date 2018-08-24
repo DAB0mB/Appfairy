@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import path from 'path'
 import uglify from 'uglify-js'
 import { fs } from '../libs'
 import Writer from './writer'
@@ -30,20 +31,20 @@ class ScriptWriter extends Writer {
     return this[_].prefetch = !!prefetch
   }
 
+  get baseUrl() {
+    return this[_].baseUrl
+  }
+
+  set baseUrl(baseUrl) {
+    this[_].baseUrl = String(baseUrl)
+  }
+
   constructor(options = {}) {
     super()
 
-    this[_].scripts = [
-      {
-        type: 'code',
-        get body() {
-          return requireText(
-            '@webcomponents/webcomponentsjs/bundles/webcomponents-sd-ce-pf.js'
-          )
-        },
-      }
-    ]
+    this[_].scripts = []
 
+    this.baseUrl = options.baseUrl
     this.prefetch = options.prefetch
   }
 
@@ -66,9 +67,13 @@ class ScriptWriter extends Writer {
     const fetchingScripts = this.scripts.map(async (script, index) => {
       const scriptFileName = scriptFileNames[index]
 
-      let code = script.type == 'src'
-        ? await fetch(script.body).then(res => res.text())
-        : script.body
+      let code = script.type == 'code'
+        ? script.body
+        : /^http/.test(script.body)
+        ? await fetch(script.body)
+          .then(res => res.text())
+          .then(text => uglify.minify(text).code)
+        : requireText(`${this.baseUrl}/${script.body}`)
       code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
       code = freeContext(code)
 
@@ -76,7 +81,7 @@ class ScriptWriter extends Writer {
     })
 
     const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
-      return `require('./${scriptFileName.split('.')[0]}')`
+      return `require('./${scriptFileName}')`
     }).join('\n')
 
     const writingIndex = fs.writeFile(
@@ -96,7 +101,7 @@ class ScriptWriter extends Writer {
 
     if (src) {
       type = 'src'
-      body = src
+      body = /^\w+:\/\//.test(src) ? src : path.resolve('/', src)
     }
     else {
       type = 'code'
@@ -117,36 +122,41 @@ class ScriptWriter extends Writer {
       return freeText(`
         {
           type: '${script.type}',
-          body: '${escape(script.body)}',
+          body: '${escape(script.body, "'")}',
         },
       `)
     }).join('\n')
 
     return freeLint(`
-      const Appfairy = require('appfairy')
-
       const scripts = [
         ==>${scripts}<==
       ]
 
-      const loadingPromises = scripts.map((script) => {
+      const loadingScripts = scripts.reduce((loaded, script) => loaded.then(() => {
         const scriptEl = document.createElement('script')
-        scriptEl.setAttribute('type', 'text/javascript')
+        scriptEl.type = 'text/javascript'
+        let loading
 
         if (script.type == 'src') {
           scriptEl.src = script.body
+
+          loading = new Promise((resolve, reject) => {
+            scriptEl.onload = resolve
+            scriptEl.onerror = reject
+          })
         }
         else {
           scriptEl.innerHTML = script.body
+
+          loading = Promise.resolve()
         }
 
-        return new Promise((resolve, reject) => {
-          script.onload = resolve
-          script.onerror = reject
-        })
-      })
+        document.head.appendChild(scriptEl)
 
-      module.exports = Appfairy.loading = Promise.all(loadingPromises)
+        return loading
+      }), Promise.resolve())
+
+      module.exports = loadingScripts
     `)
   }
 }
