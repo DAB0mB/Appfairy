@@ -10,20 +10,17 @@ const root = findRoot(process.cwd())
 
 let {
   input,
-  output,
   config,
   prefetch,
 } = minimist(process.argv.slice(2), {
-  string: ['input', 'output', 'config'],
+  string: ['input', 'config'],
   boolean: ['prefetch'],
   alias: {
     in: 'input',
-    out: 'output',
   },
   default: {
     prefetch: false,
-    input: `${root}/.appfairy/in`,
-    output: `${root}/.appfairy/out`,
+    input: `${root}/.appfairy`,
   },
 })
 
@@ -41,7 +38,6 @@ catch (e) {
 const configBase = {
   prefetch,
   input,
-  output,
   // Preserve original path
   __dirname: path.dirname(config),
 }
@@ -54,32 +50,55 @@ else {
   config = configBase
 }
 
-config.input = path.resolve(process.cwd(), config.input)
-config.output = path.resolve(process.cwd(), config.output)
+// Validate config.output schema
+if (typeof config.output != 'object') {
+  throw TypeError('config.output must be an object')
+}
+if (typeof config.output.public != 'string') {
+  throw TypeError('config.output.public must be a string')
+}
+if (typeof config.output.src == 'string') {
+  config.output.src = {
+    scripts: `${config.output.src}/scripts`,
+    styles: `${config.output.src}/styles`,
+    views: `${config.output.src}/views`,
+    controllers: `${config.output.src}/controllers`,
+  }
+}
+if (typeof config.output.src != 'object') {
+  throw TypeError('config.output.src must be an object or a string')
+}
+if (typeof config.output.src != 'object') {
+  throw TypeError('config.output.src must be an object')
+}
+if (typeof config.output.src.scripts != 'string') {
+  throw TypeError('config.output.src.scripts must be a string')
+}
+if (typeof config.output.src.styles != 'string') {
+  throw TypeError('config.output.src.styles must be a string')
+}
+if (typeof config.output.src.views != 'string') {
+  throw TypeError('config.output.src.views must be a string')
+}
+if (typeof config.output.src.controllers != 'string') {
+  throw TypeError('config.output.src.controllers must be a string')
+}
 
-try {
-  fs.statSync(config.input)
-}
-catch (e) {
-  throw Error(`Input path "${config.input}" not found`)
-}
-
-try {
-  fs.statSync(config.output)
-}
-catch (e) {
-  throw Error(`Output path "${config.output}" not found`)
+config.input = path.resolve(config.__dirname, config.input)
+config.output = {
+  public: path.resolve(config.__dirname, config.output.public),
+  src: {
+    scripts: path.resolve(config.__dirname, config.output.src.scripts),
+    styles: path.resolve(config.__dirname, config.output.src.styles),
+    views: path.resolve(config.__dirname, config.output.src.views),
+    controllers: path.resolve(config.__dirname, config.output.src.controllers),
+  }
 }
 
-transpile(config).then(() => {
-  console.log()
-  console.log(`Transpilation to ${config.output} has been complete`)
-  console.log()
-})
-.catch((e) => {
-  console.log()
-  console.log('Transpilation has failed. Error:')
-  console.log()
-  console.log(e)
-  console.log()
+transpile(config).catch((errs) => {
+  errs = [].concat(errs)
+
+  errs.forEach((err) => {
+    console.error(err)
+  })
 })

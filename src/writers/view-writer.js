@@ -8,7 +8,6 @@ import { fs } from '../libs'
 import Writer from './writer'
 
 import {
-  emptyDir,
   freeLint,
   Internal,
   requireText,
@@ -32,29 +31,32 @@ const flattenChildren = (children = [], flatten = []) => {
 
 @Internal(_)
 class ViewWriter extends Writer {
-  static async writeAll(viewWriters, dir) {
-    dir += '/src/views'
-
-    await emptyDir(dir)
-
+  static async writeAll(viewWriters, dir, ctrlsDir) {
+    const indexFilePath = `${dir}/index.js`
+    const utilsFilePath = `${dir}/utils.js`
+    const childFilePaths = [indexFilePath, utilsFilePath]
+    ctrlsDir = path.relative(dir, ctrlsDir)
     viewWriters = flattenChildren(viewWriters)
 
-    const writingViews = viewWriters.map((viewWriter) => {
-      return viewWriter.write(dir)
+    const writingViews = viewWriters.map(async (viewWriter) => {
+      const filePaths = await viewWriter.write(dir, ctrlsDir)
+      childFilePaths.push(...filePaths)
     })
 
     const index = viewWriters.map((viewWriter) => {
       return `exports.${viewWriter.className} = require('./${viewWriter.className}')`
     }).join('\n')
 
-    const writingIndex = fs.writeFile(`${dir}/index.js`, freeLint(index))
-    const writingUtils = fs.writeFile(`${dir}/utils.js`, viewUtils)
+    const writingIndex = fs.writeFile(indexFilePath, freeLint(index))
+    const writingUtils = fs.writeFile(utilsFilePath, viewUtils)
 
-    return Promise.all([
+    await Promise.all([
       ...writingViews,
       writingIndex,
       writingUtils,
     ])
+
+    return childFilePaths
   }
 
   get children() {
@@ -69,6 +71,7 @@ class ViewWriter extends Writer {
     const words = splitWords(name)
 
     Object.assign(this[_], {
+      ctrlClassName: words.concat('controller').map(upperFirst).join(''),
       className: words.concat('view').map(upperFirst).join(''),
       elName: words.map(word => word.toLowerCase()).join('-'),
       name:  words.concat('view').map(word => word.toLowerCase()).join('-'),
@@ -77,6 +80,10 @@ class ViewWriter extends Writer {
 
   get name() {
     return this[_].name
+  }
+
+  get ctrlClassName() {
+    return this[_].ctrlClassName
   }
 
   get className() {
@@ -191,25 +198,35 @@ class ViewWriter extends Writer {
     this.html = props.html
   }
 
-  write(dir) {
-    const writingChildren = this[_].children.map((child) => {
-      return child.write(dir)
+  async write(dir, ctrlsDir) {
+    const filePath = `${dir}/${this.className}.js`
+    const childFilePaths = [filePath]
+
+    const writingChildren = this[_].children.map(async (child) => {
+      const filePaths = await child.write(dir, ctrlsDir)
+      childFilePaths.push(...filePaths)
     })
 
-    const writingSelf = fs.writeFile(`${dir}/${this.className}.js`, this[_].compose())
+    const writingSelf = fs.writeFile(`${dir}/${this.className}.js`, this[_].compose(ctrlsDir))
 
-    return Promise.all([
+    await Promise.all([
       ...writingChildren,
       writingSelf,
     ])
+
+    return childFilePaths
   }
 
-  _compose() {
+  _compose(ctrlsDir) {
     return freeLint(`
       const React = require('react')
       ==>${this[_].composeChildImports()}<==
 
       class ${this.className} extends React.Component {
+        static get Controller() {
+          return require('${ctrlsDir}/${this.ctrlClassName}')
+        }
+
         render() {
           const proxies = transformProxies(this.props.children)
 
