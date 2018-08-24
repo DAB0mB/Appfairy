@@ -2,7 +2,7 @@
   "name": "appfairy",
   "private": true,
   "version": "0.1.0",
-  "description": "An executable which will transpile Webflow assets into Appfairy elements",
+  "description": "An executable that Migrates a Webflow project into a React app",
   "main": "build/appfairy.js",
   "bin": {
     "appfairy": "appfairy"
