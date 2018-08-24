@@ -10,17 +10,20 @@ const root = findRoot(process.cwd())
 
 let {
   input,
+  output,
   config,
   prefetch,
 } = minimist(process.argv.slice(2), {
-  string: ['input', 'config'],
+  string: ['output', 'input', 'config'],
   boolean: ['prefetch'],
   alias: {
     in: 'input',
+    out: 'output'
   },
   default: {
     prefetch: false,
     input: `${root}/.appfairy`,
+    output: root,
   },
 })
 
@@ -51,6 +54,18 @@ else {
 }
 
 // Validate config.output schema
+if (typeof config.prefetch != 'boolean') {
+  throw TypeError('config.prefetch must be a boolean')
+}
+if (typeof config.input != 'string') {
+  throw TypeError('config.input must be a string')
+}
+if (typeof config.output == 'string') {
+  config.output = {
+    public: `${config.output}/public`,
+    src: `${config.output}/src`,
+  }
+}
 if (typeof config.output != 'object') {
   throw TypeError('config.output must be an object')
 }
