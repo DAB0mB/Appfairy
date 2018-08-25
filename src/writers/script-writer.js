@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 import path from 'path'
 import uglify from 'uglify-js'
-import { fs } from '../libs'
+import { fs, mkdirp } from '../libs'
 import Writer from './writer'
 
 import {
@@ -48,6 +48,8 @@ class ScriptWriter extends Writer {
   }
 
   async write(dir, options) {
+    await mkdirp(dir)
+
     options = {
       ...options,
       prefetch: this.prefetch,

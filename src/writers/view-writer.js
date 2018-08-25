@@ -4,7 +4,7 @@ import HTMLtoJSX from 'htmltojsx'
 import path from 'path'
 import pretty from 'pretty'
 import statuses from 'statuses'
-import { fs } from '../libs'
+import { fs, mkdirp } from '../libs'
 import Writer from './writer'
 
 import {
@@ -32,6 +32,8 @@ const flattenChildren = (children = [], flatten = []) => {
 @Internal(_)
 class ViewWriter extends Writer {
   static async writeAll(viewWriters, dir, ctrlsDir) {
+    await mkdirp(dir)
+
     const indexFilePath = `${dir}/index.js`
     const utilsFilePath = `${dir}/utils.js`
     const childFilePaths = [indexFilePath, utilsFilePath]

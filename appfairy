@@ -41,8 +41,9 @@ catch (e) {
 const configBase = {
   prefetch,
   input,
+  output,
   // Preserve original path
-  __dirname: path.dirname(config),
+  __dirname: path.dirname(config || root),
 }
 
 if (config) {

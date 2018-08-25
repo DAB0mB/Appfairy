@@ -2,7 +2,7 @@ import CleanCSS from 'clean-css'
 import csstree from 'css-tree'
 import fetch from 'node-fetch'
 import path from 'path'
-import { fs } from '../libs'
+import { fs, mkdirp } from '../libs'
 import Writer from './writer'
 
 import {
@@ -51,6 +51,8 @@ class StyleWriter extends Writer {
   }
 
   async write(dir, options) {
+    await mkdirp(dir)
+
     options = {
       ...options,
       prefetch: this.prefetch,

@@ -19,6 +19,7 @@
     "find-root": "^1.1.0",
     "htmltojsx": "^0.3.0",
     "minimist": "^1.2.0",
+    "mkdirp": "^0.5.1",
     "ncp": "^2.0.0",
     "node-fetch": "^2.1.2",
     "pretty": "^2.0.0",
