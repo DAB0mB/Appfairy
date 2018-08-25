@@ -169,10 +169,13 @@ class ViewWriter extends Writer {
     html = pretty(html)
 
     this[_].html = html
+    const sockets = this[_].sockets = []
 
     $('[af-sock]').each((i, el) => {
       const $el = $(el)
       const socketName = $el.attr('af-sock')
+      sockets.push(socketName)
+
       $el.attr('af-sock', null)
       // Workaround would help identify the closing tag
       el.tagName += `-af-sock-${socketName}`
@@ -190,6 +193,10 @@ class ViewWriter extends Writer {
 
   get jsx() {
     return this[_].jsx
+  }
+
+  get sockets() {
+    return this[_].sockets && [...this[_].sockets]
   }
 
   constructor(props) {
@@ -224,20 +231,33 @@ class ViewWriter extends Writer {
       const React = require('react')
       ==>${this[_].composeChildImports()}<==
 
+      let Controller
+
       class ${this.className} extends React.Component {
         static get Controller() {
-          try {
-            const exports = require('${ctrlsDir}/${this.ctrlClassName}')
+          if (Controller) return Controller
 
-            return exports.default || exports
+          try {
+            Controller = require('${ctrlsDir}/${this.ctrlClassName}')
+            Controller = Controller.default || Controller
+
+            return Controller
           }
           catch (e) {
-            return ${this.className}
+            if (e.code == 'MODULE_NOT_FOUND') {
+              Controller = ${this.className}
+
+              return Controller
+            }
+
+            throw e
           }
         }
 
         render() {
-          const proxies = transformProxies(this.props.children)
+          const proxies = Controller !== ${this.className} ? transformProxies(this.props.children) : {
+            ==>${this[_].composeProxiesDefault()}<==
+          }
 
           return (
             ==>${this.jsx}<==
@@ -247,6 +267,12 @@ class ViewWriter extends Writer {
 
       module.exports = ${this.className}
     `)
+  }
+
+  _composeProxiesDefault() {
+    return this[_].sockets.map((socket) => {
+      return `${socket}: {},`
+    }).join('\n')
   }
 
   _composeChildImports() {
