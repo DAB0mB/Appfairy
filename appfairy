@@ -12,16 +12,16 @@ let {
   input,
   output,
   config,
-  prefetch,
+  nofetch,
 } = minimist(process.argv.slice(2), {
   string: ['output', 'input', 'config'],
-  boolean: ['prefetch'],
+  boolean: ['nofetch'],
   alias: {
     in: 'input',
     out: 'output'
   },
   default: {
-    prefetch: false,
+    nofetch: false,
     input: `${root}/.appfairy`,
     output: root,
   },
@@ -39,9 +39,9 @@ catch (e) {
 }
 
 const configBase = {
-  prefetch,
   input,
   output,
+  prefetch: !nofetch,
   // Preserve original path
   __dirname: path.dirname(config || root),
 }
