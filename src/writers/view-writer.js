@@ -138,19 +138,12 @@ class ViewWriter extends Writer {
       const $afEl = $(`<af-${elName}></af-${elName}>`)
 
       $el.removeAttr('af-el')
-      $afEl.attr($el.attr())
       $afEl.insertAfter($el)
       $el.remove()
 
-      Object.keys($el.attr()).forEach((attrName) => {
-        const attrValue = $el.attr(attrName)
-
-        $afEl.attr(attrName, attrValue)
-      })
-
       const child = new ViewWriter({
         name: elName,
-        html: $el.html(),
+        html: $.html($el),
       })
 
       children.push(child)
