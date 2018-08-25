@@ -266,7 +266,7 @@ class ViewWriter extends Writer {
 
   _composeProxiesDefault() {
     return this[_].sockets.map((socket) => {
-      return `${socket}: {},`
+      return `'${socket}': {},`
     }).join('\n')
   }
 
