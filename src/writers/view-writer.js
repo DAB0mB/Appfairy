@@ -137,7 +137,9 @@ class ViewWriter extends Writer {
       const elName = $el.attr('af-el')
       const $afEl = $(`<af-${elName}></af-${elName}>`)
 
-      $el.removeAttr('af-el')
+      $afEl.attr('af-sock', $el.attr('af-sock'))
+      $el.attr('af-el', null)
+      $el.attr('af-sock', null)
       $afEl.insertAfter($el)
       $el.remove()
 
