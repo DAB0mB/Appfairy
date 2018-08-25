@@ -207,8 +207,15 @@ function transformSheet(sheet) {
   })
 
   sheet = csstree.generate(ast)
+  sheet = cleanCSS.minify(sheet).styles
 
-  return cleanCSS.minify(sheet).styles
+  // Make URLs absolute so webpack won't throw any errors
+  return sheet.replace(/url\(([^)]+)\)/g, (match, url) => {
+    if (/^(.+):\/\//.test(url)) return match
+
+    url = path.resolve('/', url)
+    return `url(${url})`
+  })
 }
 
 export default StyleWriter
