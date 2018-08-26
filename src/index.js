@@ -18,7 +18,7 @@ export const transpile = async (config) => {
   ])
 
   const htmlFiles = inputFiles.filter(file => path.extname(file) == '.html')
-  const publicSubDirs = inputFiles.filter(file => !htmlFiles.includes(file))
+  const publicSubDirs = inputFiles.filter(file => !path.extname(file))
 
   const scriptWriter = new ScriptWriter({
     baseUrl: config.input,
@@ -93,10 +93,7 @@ const transpileHTMLFile = async (
 const makePublicDir = (config, publicSubDirs) => {
   const publicDir = config.output.public
 
-  const makingPublicSubDirs = publicSubDirs.filter((publicSubDir) => {
-    return ['css', 'fonts', 'images', 'js'].includes(publicSubDir)
-  })
-  .map((publicSubDir) => {
+  const makingPublicSubDirs = publicSubDirs.map((publicSubDir) => {
     return ncp(
       `${config.input}/${publicSubDir}`,
       `${publicDir}/${publicSubDir}`,
