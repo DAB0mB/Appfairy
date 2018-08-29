@@ -69,7 +69,7 @@ For an in-depth explanation regards Appfairy be sure to check-out the following:
 
 - [Medium blog post](https://medium.com/@eytanmanor/how-to-create-a-react-app-out-of-a-webflow-project-309b696a0533) - An introduction to Appfairy and the motives behind it.
 - [YouTube video](https://www.youtube.com/watch?v=6hJe6pZld0o) - I walk through Appfairy and an implementation of an example app.
-- [Example app](https://github.com/DAB0mB/Appfairy/tree/master/example-app) - An example for a simple app which uses Appfairy.
+- [Example app](https://github.com/DAB0mB/Appfairy/tree/master/examples/prefetch) - An example for a simple app which uses Appfairy.
 
 ## Docs
 
@@ -92,7 +92,7 @@ The commit consists of the following files (regardless if they were added, modif
 
 The output can be controlled using a config file named `appfairy_config.js` which should be located in the root of the project. The config file may (or may not) include some of the following options:
 
-- **nofetch (boolean)** - Will disable prefetching of styles and scripts which are necessary for the design to work. If specified, the scripts and styles will be fetched during runtime. An example app with runtime fetching can be found [here]().
+- **nofetch (boolean)** - Will disable prefetching of styles and scripts which are necessary for the design to work. If specified, the scripts and styles will be fetched during runtime. An example app with runtime fetching can be found [here](https://github.com/DAB0mB/Appfairy/tree/master/examples/nofetch).
 - **input (string)** - The input dir for the Webflow exported files. Defaults to `.appfairy` dir in the root of the project.
 - **output (string/object)** - If a string was provided, the output will be mapped to the specified dir. If an object, each key in the object will map its asset type to the specified dir in the value. The object has the following schema:
   - **public (string)** - Public dir. Defaults to `public`.
