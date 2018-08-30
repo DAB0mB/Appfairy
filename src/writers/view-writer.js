@@ -1,10 +1,10 @@
 import cheerio from 'cheerio'
-import csstree from 'css-tree'
 import HTMLtoJSX from 'htmltojsx'
 import path from 'path'
 import pretty from 'pretty'
 import statuses from 'statuses'
 import { fs, mkdirp } from '../libs'
+import { encapsulateCSS } from '../utils'
 import Writer from './writer'
 
 import {
@@ -109,25 +109,10 @@ class ViewWriter extends Writer {
     // Encapsulate styles
     $('style').each((i, el) => {
       const $el = $(el)
-      const ast = csstree.parse($el.html())
+      const html = $el.html()
+      const css = encapsulateCSS(html)
 
-      csstree.walk(ast, (node) => {
-        if (node.type == 'ClassSelector') {
-          node.name = `__af-${node.name}`;
-        }
-      })
-
-      $el.html(csstree.generate(ast))
-    })
-
-    $('*').each((i, el) => {
-      const $el = $(el)
-      let className = $el.attr('class')
-
-      if (className && !/__af-/.test(className)) {
-        className = className.replace(/([\w_-]+)/g, '__af-$1')
-        $el.attr('class', className)
-      }
+      $el.html(css)
     })
 
     let el = $('[af-el]')[0]
@@ -160,10 +145,18 @@ class ViewWriter extends Writer {
     // are not loaded
     $('script').remove()
 
-    html = $('body').html()
+    // Wrapping with .af-container will apply encapsulated CSS
+    const $body = $('body')
+    const $afContainer = $('<span class="af-container"></span>')
+
+    $afContainer.append($('body').children())
+    $body.append($afContainer)
+
+    html = $body.html()
     html = pretty(html)
 
     this[_].html = html
+
     const sockets = this[_].sockets = []
 
     // Find root sockets

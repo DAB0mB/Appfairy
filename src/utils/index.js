@@ -16,6 +16,24 @@ export const escape = (str, quote) => {
   }
 }
 
+// Encapsulates all rules under .af-container
+export const encapsulateCSS = (css) => {
+  return css.replace(
+    /((?:^|\{|\})\s*(?:\/\*[^]*?\*\/)?\s*)([^@{}]+?)(\s*\{)/g, (
+    match, left, rule, right
+  ) => {
+    // Animation keyframe e.g. 50%
+    if (/^\d/.test(rule)) return match
+    // Empty line skip, probably after a media query or so
+    if (!rule.trim()) return match
+
+    // Apply for all selectors in rule
+    rule = rule.replace(/([^\s][^,]*)(\s*,?)/g, '.af-container $1$2')
+
+    return `${left}${rule}${right}`
+  })
+}
+
 // Will use the shortest indention as an axis
 export const freeText = (text) => {
   if (text instanceof Array) {

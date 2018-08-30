@@ -1,8 +1,8 @@
 import CleanCSS from 'clean-css'
-import csstree from 'css-tree'
 import fetch from 'node-fetch'
 import path from 'path'
 import { fs, mkdirp } from '../libs'
+import { encapsulateCSS } from '../utils'
 import Writer from './writer'
 
 import {
@@ -185,9 +185,7 @@ class StyleWriter extends Writer {
         styleSheets.forEach((styleSheet) => {
           Array.from(styleSheet.rules).forEach((rule) => {
             if (rule.selectorText) {
-              rule.selectorText = rule.selectorText
-                .replace(/\\.([\\w_-]+)/g, '.__af-$1')
-                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2__af-$3$4"]')
+              rule.selectorText = rule.selectorText.replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-container $1$2')
             }
           })
         })
@@ -198,15 +196,7 @@ class StyleWriter extends Writer {
 
 // Will minify and encapsulate classes
 function transformSheet(sheet) {
-  const ast = csstree.parse(sheet)
-
-  csstree.walk(ast, (node) => {
-    if (node.type == 'ClassSelector') {
-      node.name = `__af-${node.name}`;
-    }
-  })
-
-  sheet = csstree.generate(ast)
+  sheet = encapsulateCSS(sheet)
   sheet = cleanCSS.minify(sheet).styles
 
   // Make URLs absolute so webpack won't throw any errors

@@ -14,7 +14,6 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "clean-css": "^4.1.11",
-    "css-tree": "^1.0.0-alpha.29",
     "execa": "^0.11.0",
     "find-root": "^1.1.0",
     "htmltojsx": "^0.3.0",
