@@ -2,7 +2,7 @@
 
 const React = require('react')
 
-exports.transformProxies = (children) => {
+exports.transformProxies = (children = []) => {
   const proxies = {}
 
   React.Children.forEach(children, (child) => {
@@ -18,6 +18,12 @@ exports.transformProxies = (children) => {
   })
 
   return proxies
+}
+
+exports.createScope = (children, callback) => {
+  const proxies = exports.transformProxies(children)
+
+  return callback(proxies)
 }
 
 /* eslint-enable */
