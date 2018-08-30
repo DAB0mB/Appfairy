@@ -185,7 +185,10 @@ class StyleWriter extends Writer {
         styleSheets.forEach((styleSheet) => {
           Array.from(styleSheet.rules).forEach((rule) => {
             if (rule.selectorText) {
-              rule.selectorText = rule.selectorText.replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-container $1$2')
+              rule.selectorText = rule.selectorText
+                .replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-container $1$2')
+                .replace(/\\.af-container html/g, '.af-container')
+                .replace(/\\.af-container body/g, '.af-container')
             }
           })
         })

@@ -28,7 +28,11 @@ export const encapsulateCSS = (css) => {
     if (!rule.trim()) return match
 
     // Apply for all selectors in rule
-    rule = rule.replace(/([^\s][^,]*)(\s*,?)/g, '.af-container $1$2')
+    // Note that <html /> and <body /> tags are replaced with .af-container
+    rule = rule
+      .replace(/([^\s][^,]*)(\s*,?)/g, '.af-container $1$2')
+      .replace(/\.af-container html/g, '.af-container')
+      .replace(/\.af-container body/g, '.af-container')
 
     return `${left}${rule}${right}`
   })
