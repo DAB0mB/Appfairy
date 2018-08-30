@@ -167,7 +167,7 @@ class ViewWriter extends Writer {
     const sockets = this[_].sockets = []
 
     // Find root sockets
-    $(':not([af-sock]) [af-sock]').each((i, el) => {
+    $('[af-sock]').each((i, el) => {
       const $el = $(el)
       const socketName = $el.attr('af-sock')
       sockets.push(socketName)
@@ -299,16 +299,38 @@ function bindJSX(jsx, children = []) {
     ) => (
       // If there are nested sockets
       /<[\w._-]+-af-sock-[\w._-]+/.test(children) ? (
-        `{map(proxies['${sock}'], props => <${el}${attrs} {...props}>{createScope(props.children, proxies => <React.Fragment>${bindJSX(children)}</React.Fragment>)}</${el}>)}`
+        `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{createScope(props.children, proxies => <React.Fragment>${bindJSX(children)}</React.Fragment>)}</${el}>)}`
       ) : (
-        `{map(proxies['${sock}'], props => <${el}${attrs} {...props}>{props.children ? props.children : <React.Fragment>${children}</React.Fragment>}</${el}>)}`
+        `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{props.children ? props.children : <React.Fragment>${children}</React.Fragment>}</${el}>)}`
       )
     ))
     // Self closing
     .replace(
-      /<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g,
-      "{map(proxies['$2'], props => <$1$3 {...props}>{props.children}</$1>)}"
-    )
+      /<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g, (
+      match, el, sock, attrs
+    ) => (
+      `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{props.children}</${el}>)}`
+    ))
+}
+
+// Merge props along with class name
+function mergeProps(attrs) {
+  attrs = attrs.trim()
+
+  if (!attrs) {
+    return '{...props}'
+  }
+
+  let className = attrs.match(/className="([^"]+)"/)
+
+  if (!className) {
+    return `${attrs} {...props}`
+  }
+
+  className = className[1]
+  attrs = attrs.replace(/ ?className="[^"]+"/, '')
+
+  return `${attrs} {...{...props, className: \`${className} $\{props.className || ''}\`}}`.trim()
 }
 
 export default ViewWriter

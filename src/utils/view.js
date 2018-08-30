@@ -8,12 +8,15 @@ exports.transformProxies = (children = []) => {
   React.Children.forEach(children, (child) => {
     const props = Object.assign({}, child.props)
 
-    // Multiple
     if (!proxies[child.type]) {
-      proxies[child.type] = []
+      proxies[child.type] = props
     }
-
-    proxies[child.type].push(props)
+    else if (!(proxies[child.type] instanceof Array)) {
+      proxies[child.type] = [proxies[child.type], props]
+    }
+    else {
+      proxies[child.type].push(props)
+    }
 
     if (child.key != null) {
       props.key = child.key
