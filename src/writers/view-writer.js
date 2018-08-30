@@ -267,7 +267,7 @@ class ViewWriter extends Writer {
 
   _composeProxiesDefault() {
     return this[_].sockets.map((socket) => {
-      return `'${socket}': {},`
+      return `'${socket}': [],`
     }).join('\n')
   }
 
@@ -276,7 +276,7 @@ class ViewWriter extends Writer {
       return `const ${child.className} = require('./${child.className}')`
     })
 
-    imports.push(`const { createScope, transformProxies } = require('./utils')`)
+    imports.push(`const { createScope, map, transformProxies } = require('./utils')`)
 
     return imports.join('\n')
   }
@@ -299,15 +299,15 @@ function bindJSX(jsx, children = []) {
     ) => (
       // If there are nested sockets
       /<[\w._-]+-af-sock-[\w._-]+/.test(children) ? (
-        `{proxies['${sock}'] && <${el}${attrs} {...proxies['${sock}']}>{createScope(proxies['${sock}'].children, (proxies) => <React.Fragment>${bindJSX(children)}</React.Fragment>)}</${el}>}`
+        `{map(proxies['${sock}'], props => <${el}${attrs} {...props}>{createScope(props.children, proxies => <React.Fragment>${bindJSX(children)}</React.Fragment>)}</${el}>)}`
       ) : (
-        `{proxies['${sock}'] && <${el}${attrs} {...proxies['${sock}']}>{proxies['${sock}'].children ? proxies['${sock}'].children : <React.Fragment>${children}</React.Fragment>}</${el}>}`
+        `{map(proxies['${sock}'], props => <${el}${attrs} {...props}>{props.children ? props.children : <React.Fragment>${children}</React.Fragment>}</${el}>)}`
       )
     ))
     // Self closing
     .replace(
       /<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g,
-      "{proxies['$2'] && <$1$3 {...proxies['$2']}>{proxies['$2'].children}</$1>}"
+      "{map(proxies['$2'], props => <$1$3 {...props}>{props.children}</$1>)}"
     )
 }
 

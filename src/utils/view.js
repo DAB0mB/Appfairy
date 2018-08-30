@@ -6,7 +6,14 @@ exports.transformProxies = (children = []) => {
   const proxies = {}
 
   React.Children.forEach(children, (child) => {
-    const props = proxies[child.type] = Object.assign({}, child.props)
+    const props = Object.assign({}, child.props)
+
+    // Multiple
+    if (!proxies[child.type]) {
+      proxies[child.type] = []
+    }
+
+    proxies[child.type].push(props)
 
     if (child.key != null) {
       props.key = child.key
@@ -24,6 +31,13 @@ exports.createScope = (children, callback) => {
   const proxies = exports.transformProxies(children)
 
   return callback(proxies)
+}
+
+exports.map = (props, callback) => {
+  if (props == null) return null
+  if (!(props instanceof Array)) return callback(props)
+
+  return props.map(callback)
 }
 
 /* eslint-enable */
