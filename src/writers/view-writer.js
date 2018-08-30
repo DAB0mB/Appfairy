@@ -166,7 +166,8 @@ class ViewWriter extends Writer {
     this[_].html = html
     const sockets = this[_].sockets = []
 
-    $('[af-sock]').each((i, el) => {
+    // Find root sockets
+    $(':not([af-sock]) [af-sock]').each((i, el) => {
       const $el = $(el)
       const socketName = $el.attr('af-sock')
       sockets.push(socketName)
