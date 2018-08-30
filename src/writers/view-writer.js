@@ -150,6 +150,8 @@ class ViewWriter extends Writer {
     const $afContainer = $('<span class="af-container"></span>')
 
     $afContainer.append($('body').children())
+    $afContainer.prepend('\n  ')
+    $afContainer.append('\n')
     $body.append($afContainer)
 
     html = $body.html()
