@@ -114,6 +114,16 @@ class ViewWriter extends Writer {
       $el.html(css)
     })
 
+    $('*').each((i, el) => {
+      const $el = $(el)
+      let className = $el.attr('class')
+
+      if (className && !/af-class-/.test(className)) {
+        className = className.replace(/([\w_-]+)/g, 'af-class-$1')
+        $el.attr('class', className)
+      }
+    })
+
     let el = $('[af-el]')[0]
 
     while (el) {
@@ -144,9 +154,9 @@ class ViewWriter extends Writer {
     // are not loaded
     $('script').remove()
 
-    // Wrapping with .af-container will apply encapsulated CSS
+    // Wrapping with .af-view will apply encapsulated CSS
     const $body = $('body')
-    const $afContainer = $('<span class="af-container"></span>')
+    const $afContainer = $('<span class="af-view"></span>')
 
     $afContainer.append($body.contents())
     $afContainer.prepend('\n  ')
@@ -280,7 +290,7 @@ class ViewWriter extends Writer {
 function bindJSX(jsx, children = []) {
   children.forEach((child) => {
     jsx = jsx.replace(
-      new RegExp(`(?<!__)af-${child.elName}`, 'g'),
+      new RegExp(`af-${child.elName}`, 'g'),
       `${child.className}.Controller`
     )
   })

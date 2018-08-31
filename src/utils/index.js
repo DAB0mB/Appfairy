@@ -16,7 +16,7 @@ export const escape = (str, quote) => {
   }
 }
 
-// Encapsulates all rules under .af-container
+// Encapsulates all rules under .af-view
 export const encapsulateCSS = (css) => {
   return css.replace(
     /((?:^|\{|\})\s*(?:\/\*[^]*?\*\/\s*)*)([^@{}]+?)(\s*\{)/g, (
@@ -28,11 +28,13 @@ export const encapsulateCSS = (css) => {
     if (!rule.trim()) return match
 
     // Apply for all selectors in rule
-    // Note that <html /> and <body /> tags are replaced with .af-container
+    // Note that <html /> and <body /> tags are replaced with .af-view
     rule = rule
-      .replace(/([^\s][^,]*)(\s*,?)/g, '.af-container $1$2')
-      .replace(/\.af-container html/g, '.af-container')
-      .replace(/\.af-container body/g, '.af-container')
+      .replace(/\.([\w_-]+)/g, '.af-class-$1')
+      .replace(/\[class(.?)="( ?)([^"]+)( ?)"\]/g, '[class$1="$2af-class-$3$4"]')
+      .replace(/([^\s][^,]*)(\s*,?)/g, '.af-view $1$2')
+      .replace(/\.af-view html/g, '.af-view')
+      .replace(/\.af-view body/g, '.af-view')
 
     return `${left}${rule}${right}`
   })

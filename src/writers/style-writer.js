@@ -186,9 +186,11 @@ class StyleWriter extends Writer {
           Array.from(styleSheet.rules).forEach((rule) => {
             if (rule.selectorText) {
               rule.selectorText = rule.selectorText
-                .replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-container $1$2')
-                .replace(/\\.af-container html/g, '.af-container')
-                .replace(/\\.af-container body/g, '.af-container')
+                .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
+                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
+                .replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-view $1$2')
+                .replace(/\\.af-view html/g, '.af-view')
+                .replace(/\\.af-view body/g, '.af-view')
             }
           })
         })
