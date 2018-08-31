@@ -1,7 +1,6 @@
 import cheerio from 'cheerio'
 import HTMLtoJSX from 'htmltojsx'
 import path from 'path'
-import pretty from 'pretty'
 import statuses from 'statuses'
 import { fs, mkdirp } from '../libs'
 import { encapsulateCSS } from '../utils'
@@ -149,13 +148,11 @@ class ViewWriter extends Writer {
     const $body = $('body')
     const $afContainer = $('<span class="af-container"></span>')
 
-    $afContainer.append($('body').children())
+    $afContainer.append($body.contents())
     $afContainer.prepend('\n  ')
-    $afContainer.append('\n')
     $body.append($afContainer)
 
     html = $body.html()
-    html = pretty(html)
 
     this[_].html = html
 
@@ -172,8 +169,11 @@ class ViewWriter extends Writer {
       el.tagName += `-af-sock-${socketName}`
     })
 
+    // Refetch modified html
+    html = $body.html()
+
     // Transforming HTML into JSX
-    let jsx = htmltojsx.convert($('body').html()).trim()
+    let jsx = htmltojsx.convert(html).trim()
     // Bind controller to view
     this[_].jsx = bindJSX(jsx, children)
   }
