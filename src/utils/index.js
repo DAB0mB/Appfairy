@@ -19,7 +19,7 @@ export const escape = (str, quote) => {
 // Encapsulates all rules under .af-container
 export const encapsulateCSS = (css) => {
   return css.replace(
-    /((?:^|\{|\})\s*(?:\/\*[^]*?\*\/)?\s*)([^@{}]+?)(\s*\{)/g, (
+    /((?:^|\{|\})\s*(?:\/\*[^]*?\*\/\s*)*)([^@{}]+?)(\s*\{)/g, (
     match, left, rule, right
   ) => {
     // Animation keyframe e.g. 50%
