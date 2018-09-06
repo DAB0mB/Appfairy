@@ -23,6 +23,7 @@
     "recursive-readdir": "^2.2.2",
     "resolve": "^1.8.1",
     "rimraf": "^2.6.2",
+    "source-map-support": "^0.5.9",
     "statuses": "^1.5.0",
     "uglify-js": "^3.4.5"
   },
