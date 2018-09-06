@@ -1,6 +1,8 @@
 # Appfairy
 
-I'm just tired going through a design and translating it into React components. Appfairy is a CLI tool that does that for you - by running a single command the design will be transpired into React components. As for now Appfairy works with Webflow only for web React apps, but the near future plans are to have that compatible with Sketch and React Native.
+<p align="center"><img src="https://user-images.githubusercontent.com/7648874/45173702-8e98e700-b23b-11e8-96c7-2426ab03abe0.png" alt="appfairy"></p>
+
+I'm just tired going through a design and translating it into React components. Appfairy is a CLI tool that does that for you - by running a single command the design will be transpiled into React components. As for now Appfairy works with Webflow only for web React apps, but the near future plans are to have that compatible with Sketch and React Native.
 
 ## Methodology
 
@@ -81,14 +83,14 @@ After exporting your Webflow project into a zip file, simply unzip it into a dir
 
 The commit consists of the following files (regardless if they were added, modified or deleted):
 
-    🗁 public (public assets which should be served by our app's server)
-       🗀 images
-       🗀 fonts
-       🗀 css
-    🗁 src
-       🗀 scripts (scripts that should be imported in index.js)
-       🗀 styles (css files that should be imported in index.js)
-       🗀 views (contains ConsultFormView - further explanation below)
+- **public/** (public assets which should be served by our app's server)
+  - **images/**
+  - **fonts/**
+  - **css/**
+- **src/**
+  - **scripts/** (scripts that should be imported in index.js)
+  - **styles/** (css files that should be imported in index.js)
+  - **views/** (contains ConsultFormView - further explanation below)
 
 The output can be controlled using a config file named `appfairy_config.js` which should be located in the root of the project. The config file may (or may not) include some of the following options:
 
