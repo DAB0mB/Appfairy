@@ -1,6 +1,5 @@
 {
   "name": "appfairy",
-  "private": true,
   "version": "0.1.0",
   "description": "A CLI tool to Migrate a Webflow project into a React app",
   "main": "build/appfairy.js",
