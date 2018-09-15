@@ -2,12 +2,16 @@ import cheerio from 'cheerio'
 import HTMLtoJSX from 'htmltojsx'
 import path from 'path'
 import statuses from 'statuses'
+import uglify from 'uglify-js'
 import { fs, mkdirp } from '../libs'
-import { encapsulateCSS } from '../utils'
 import Writer from './writer'
 
 import {
+  encapsulateCSS,
+  escape,
   freeLint,
+  freeScope,
+  freeText,
   Internal,
   requireText,
   splitWords,
@@ -58,6 +62,14 @@ class ViewWriter extends Writer {
     ])
 
     return childFilePaths
+  }
+
+  get baseUrl() {
+    return this[_].baseUrl
+  }
+
+  set baseUrl(baseUrl) {
+    this[_].baseUrl = String(baseUrl)
   }
 
   get children() {
@@ -140,6 +152,7 @@ class ViewWriter extends Writer {
       const child = new ViewWriter({
         name: elName,
         html: $.html($el),
+        baseUrl: this.baseUrl,
       })
 
       children.push(child)
@@ -150,9 +163,29 @@ class ViewWriter extends Writer {
     $('[af-ignore]').remove()
     // Empty inner HTML
     $('[af-empty]').html('').attr('af-empty', null)
-    // Remove inline script tags. Will ensure Webflow runtime library and jQuery
-    // are not loaded
-    $('script').remove()
+
+    this[_].scripts = []
+
+    // Set inline scripts. Will be loaded once component has been mounted
+    $('script').each((i, script) => {
+      const $script = $(script)
+      const src = $script.attr('src')
+
+      if (src) {
+        this[_].scripts.push({
+          type: 'src',
+          body: src,
+        })
+      }
+      else {
+        this[_].scripts.push({
+          type: 'code',
+          body: $script.html(),
+        })
+      }
+
+      $script.remove()
+    })
 
     // Wrapping with .af-view will apply encapsulated CSS
     const $body = $('body')
@@ -186,6 +219,10 @@ class ViewWriter extends Writer {
     let jsx = htmltojsx.convert(html).trim()
     // Bind controller to view
     this[_].jsx = bindJSX(jsx, children)
+  }
+
+  get scripts() {
+    return this[_].scripts ? this[_].scripts.slice() : []
   }
 
   get html() {
@@ -230,7 +267,12 @@ class ViewWriter extends Writer {
   _compose(ctrlsDir) {
     return freeLint(`
       const React = require('react')
+      const ReactDOM = require('react-dom')
+      const { createScope, delegate, map, transformProxies } = require('./utils')
       ==>${this[_].composeChildImports()}<==
+      const scripts = [
+        ==>${this[_].composeScriptsDeclerations()}<==
+      ]
 
       let Controller
 
@@ -253,6 +295,40 @@ class ViewWriter extends Writer {
 
             throw e
           }
+        }
+
+        componentDidMount() {
+          const node = ReactDOM.findDOMNode(this)
+          const nodeDoc = delegate(document)
+          const nodeWin = delegate(window)
+
+          nodeDoc.getElementsByClassName = (className) => {
+            return node.getElementsByClassName('af-class' + className)
+          }
+
+          nodeDoc.querySelector = (query) => {
+            query = query
+              .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
+              .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
+
+            return node.querySelector(query)
+          }
+
+          nodeDoc.querySelectorAll = (query) => {
+            query = query
+              .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
+              .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
+
+            return node.querySelectorAll(query)
+          }
+
+          Object.defineProperty(nodeWin, 'document', {
+            configurable: true,
+            writable: true,
+            value: nodeDoc,
+          })
+
+          ==>${this[_].composeScriptsInvocations()}<==
         }
 
         render() {
@@ -281,9 +357,36 @@ class ViewWriter extends Writer {
       return `const ${child.className} = require('./${child.className}')`
     })
 
-    imports.push(`const { createScope, map, transformProxies } = require('./utils')`)
+    // Line skip
+    imports.push('')
 
     return imports.join('\n')
+  }
+
+  _composeScriptsDeclerations() {
+    return this[_].scripts.map((script) => {
+      return script.type == 'src'
+        ? `fetch("${script.body}").then(body => body.text()),`
+        : `Promise.resolve("${escape(uglify.minify(script.body).code)}"),`
+    }).join('\n')
+  }
+
+  _composeScriptsInvocations() {
+    const invoke = freeScope('eval(arguments[2])', 'nodeWin', {
+      'nodeDoc': 'document',
+      'nodeWin': 'window',
+      'script': null,
+    })
+
+    return freeText(`
+      scripts.reduce((loaded, loading) => {
+        return loaded.then((script) => {
+          ==>${invoke}<==
+
+          return loading
+        })
+      })
+    `)
   }
 }
 
