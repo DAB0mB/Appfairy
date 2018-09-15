@@ -83,9 +83,9 @@ const transpileHTMLFile = async (
     name: htmlFile.split('.').slice(0, -1).join('.')
   })
 
-  setScripts(scriptWriter, $head)
-  setStyles(styleWriter, $head)
-  setHTML(viewWriter, $body)
+  setScripts(scriptWriter, $head, $)
+  setStyles(styleWriter, $head, $)
+  setHTML(viewWriter, $body, $)
 
   return viewWriter
 }
@@ -141,6 +141,11 @@ const setStyles = async (styleWriter, $head) => {
   })
 }
 
-const setHTML = (viewWriter, $body) => {
-  viewWriter.html = $body.html()
+const setHTML = (viewWriter, $body, $) => {
+  // Create a wrap around $body so we can inherit its style without actually
+  // using a <body> tag
+  const $div = $('<div>')
+  $div.html($body.html())
+  $div.attr($body.attr())
+  viewWriter.html = $.html($div)
 }
