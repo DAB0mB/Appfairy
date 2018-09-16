@@ -193,6 +193,7 @@ class ViewWriter extends Writer {
 
     $afContainer.append($body.contents())
     $afContainer.prepend('\n  ')
+    $afContainer.append('\n  ')
     $body.append($afContainer)
 
     html = $body.html()
@@ -298,37 +299,39 @@ class ViewWriter extends Writer {
         }
 
         componentDidMount() {
-          const node = ReactDOM.findDOMNode(this)
-          const nodeDoc = delegate(document)
-          const nodeWin = delegate(window)
+          ==>${this[_].scripts.length ? freeText(`
+            const node = ReactDOM.findDOMNode(this)
+            const nodeDoc = delegate(document)
+            const nodeWin = delegate(window)
 
-          nodeDoc.getElementsByClassName = (className) => {
-            return node.getElementsByClassName('af-class' + className)
-          }
+            nodeDoc.getElementsByClassName = (className) => {
+              return node.getElementsByClassName('af-class' + className)
+            }
 
-          nodeDoc.querySelector = (query) => {
-            query = query
-              .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
-              .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
+            nodeDoc.querySelector = (query) => {
+              query = query
+                .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
+                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
 
-            return node.querySelector(query)
-          }
+              return node.querySelector(query)
+            }
 
-          nodeDoc.querySelectorAll = (query) => {
-            query = query
-              .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
-              .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
+            nodeDoc.querySelectorAll = (query) => {
+              query = query
+                .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
+                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
 
-            return node.querySelectorAll(query)
-          }
+              return node.querySelectorAll(query)
+            }
 
-          Object.defineProperty(nodeWin, 'document', {
-            configurable: true,
-            writable: true,
-            value: nodeDoc,
-          })
+            Object.defineProperty(nodeWin, 'document', {
+              configurable: true,
+              writable: true,
+              value: nodeDoc,
+            })
 
-          ==>${this[_].composeScriptsInvocations()}<==
+            ==>${this[_].composeScriptsInvocations()}<==
+          `) : ''}<==
         }
 
         render() {
