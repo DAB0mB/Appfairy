@@ -102,11 +102,9 @@ export const freeScope = (script, context = 'window', args = {}) => {
 
   return freeText(`
     new Function(\`
-      ==>${Object.values(args).filter(Boolean).map((key, i) =>
-        `const ${key} = arguments[${i}];`
-      ).join('\n')}<==
-
-      ${script}
+      with (this) {
+        ${script}
+      }
     \`).call(${callArgs.join(', ')})
   `)
 }

@@ -59,7 +59,7 @@ exports.getPropertyDescriptors = (obj) => {
 }
 
 exports.delegate = (src) => {
-  const descriptors = getPropertyDescriptors(document)
+  const descriptors = exports.getPropertyDescriptors(src)
   const dst = {}
 
   Object.entries(descriptors).forEach(([key, descriptor]) => {

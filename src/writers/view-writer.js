@@ -330,6 +330,12 @@ class ViewWriter extends Writer {
               value: nodeDoc,
             })
 
+            Object.defineProperty(nodeWin, 'window', {
+              configurable: true,
+              writable: true,
+              value: nodeWin,
+            })
+
             ==>${this[_].composeScriptsInvocations()}<==
           `) : ''}<==
         }
@@ -375,14 +381,12 @@ class ViewWriter extends Writer {
   }
 
   _composeScriptsInvocations() {
-    const invoke = freeScope('eval(arguments[2])', 'nodeWin', {
-      'nodeDoc': 'document',
-      'nodeWin': 'window',
+    const invoke = freeScope('eval(arguments[0])', 'nodeWin', {
       'script': null,
     })
 
     return freeText(`
-      scripts.reduce((loaded, loading) => {
+      scripts.concat(Promise.resolve()).reduce((loaded, loading) => {
         return loaded.then((script) => {
           ==>${invoke}<==
 
