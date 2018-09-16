@@ -1,4 +1,4 @@
-import mkdirp from 'mkdirp'
+import fs from 'fs-extra'
 import { promisify } from 'util'
 
-export default promisify(mkdirp)
+export default promisify(fs.mkdirp)

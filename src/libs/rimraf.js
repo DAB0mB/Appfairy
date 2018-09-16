@@ -1,4 +1,4 @@
-import rimraf from 'rimraf'
+import fs from 'fs-extra'
 import { promisify } from 'util'
 
-export default promisify(rimraf)
+export default promisify(fs.remove)

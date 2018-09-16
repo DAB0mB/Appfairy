@@ -1,4 +1,4 @@
-import { ncp } from 'ncp'
+import fs from 'fs-extra'
 import { promisify } from 'util'
 
-export default promisify(ncp)
+export default promisify(fs.copy)
