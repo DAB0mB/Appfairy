@@ -269,7 +269,7 @@ class ViewWriter extends Writer {
     return freeLint(`
       const React = require('react')
       const ReactDOM = require('react-dom')
-      const { createScope, delegate, map, transformProxies } = require('./utils')
+      const { createScope, map, transformProxies, fabricateDocument, fabricateWindow } = require('./utils')
       ==>${this[_].composeChildImports()}<==
       const scripts = [
         ==>${this[_].composeScriptsDeclerations()}<==
@@ -301,40 +301,8 @@ class ViewWriter extends Writer {
         componentDidMount() {
           ==>${this[_].scripts.length ? freeText(`
             const node = ReactDOM.findDOMNode(this)
-            const nodeDoc = delegate(document)
-            const nodeWin = delegate(window)
-
-            nodeDoc.getElementsByClassName = (className) => {
-              return node.getElementsByClassName('af-class' + className)
-            }
-
-            nodeDoc.querySelector = (query) => {
-              query = query
-                .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
-                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
-
-              return node.querySelector(query)
-            }
-
-            nodeDoc.querySelectorAll = (query) => {
-              query = query
-                .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
-                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
-
-              return node.querySelectorAll(query)
-            }
-
-            Object.defineProperty(nodeWin, 'document', {
-              configurable: true,
-              writable: true,
-              value: nodeDoc,
-            })
-
-            Object.defineProperty(nodeWin, 'window', {
-              configurable: true,
-              writable: true,
-              value: nodeWin,
-            })
+            const nodeDoc = fabricateDocument(node)
+            const nodeWin = fabricateWindow(window)
 
             ==>${this[_].composeScriptsInvocations()}<==
           `) : ''}<==
