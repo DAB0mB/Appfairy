@@ -4,6 +4,7 @@ import path from 'path'
 import statuses from 'statuses'
 import uglify from 'uglify-js'
 import { fs, mkdirp } from '../libs'
+import raw from '../raw'
 import Writer from './writer'
 
 import {
@@ -13,14 +14,12 @@ import {
   freeScope,
   freeText,
   Internal,
-  requireText,
   splitWords,
   upperFirst,
 } from '../utils'
 
 const _ = Symbol('_ViewWriter')
 const htmltojsx = new HTMLtoJSX({ createClass: false })
-const viewUtils = requireText(path.resolve(__dirname, '../src/utils/view.js'))
 
 const flattenChildren = (children = [], flatten = []) => {
   children.forEach((child) => {
@@ -38,8 +37,8 @@ class ViewWriter extends Writer {
     await mkdirp(dir)
 
     const indexFilePath = `${dir}/index.js`
-    const utilsFilePath = `${dir}/utils.js`
-    const childFilePaths = [indexFilePath, utilsFilePath]
+    const helpersFilePath = `${dir}/helpers.js`
+    const childFilePaths = [indexFilePath, helpersFilePath]
     ctrlsDir = path.relative(dir, ctrlsDir)
     viewWriters = flattenChildren(viewWriters)
 
@@ -53,12 +52,12 @@ class ViewWriter extends Writer {
     }).join('\n')
 
     const writingIndex = fs.writeFile(indexFilePath, freeLint(index))
-    const writingUtils = fs.writeFile(utilsFilePath, viewUtils)
+    const writingHelpers = fs.writeFile(helpersFilePath, raw.viewHelpers)
 
     await Promise.all([
       ...writingViews,
       writingIndex,
-      writingUtils,
+      writingHelpers,
     ])
 
     return childFilePaths
@@ -269,7 +268,7 @@ class ViewWriter extends Writer {
     return freeLint(`
       const React = require('react')
       const ReactDOM = require('react-dom')
-      const { createScope, map, transformProxies, fabricateDocument, fabricateWindow } = require('./utils')
+      const { createScope, fabricateDocument, fabricateWindow, map, transformProxies } = require('./helpers')
       ==>${this[_].composeChildImports()}<==
       const scripts = [
         ==>${this[_].composeScriptsDeclerations()}<==
