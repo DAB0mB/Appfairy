@@ -131,6 +131,24 @@ class ViewWriter extends Writer {
 
       if (className && !/af-class-/.test(className)) {
         className = className.replace(/([\w_-]+)/g, 'af-class-$1')
+
+        switch (this.source) {
+          case 'webflow':
+            className = className
+              .replace(/af-class-w-/g, 'w-')
+            break
+          case 'sketch':
+            className = className
+              .replace(/af-class-anima-/g, 'anima-')
+              .replace(/af-class-([\w_-]+)an-animation([\w_-]+)/g, '$1an-animation$2')
+            break
+          default:
+            className = className
+              .replace(/af-class-w-/g, 'w-')
+              .replace(/af-class-anima-/g, 'anima-')
+              .replace(/af-class-([\w_-]+)an-animation([\w_-]+)/g, '$1an-animation$2')
+        }
+
         $el.attr('class', className)
       }
     })
@@ -277,7 +295,7 @@ class ViewWriter extends Writer {
     return freeLint(`
       const React = require('react')
       const ReactDOM = require('react-dom')
-      const { createScope, fabricateDocument, fabricateWindow, map, transformProxies } = require('./helpers')
+      const { createScope, transformProxies, map } = require('./helpers')
       ==>${this[_].composeChildImports()}<==
       const scripts = [
         ==>${this[_].composeScriptsDeclerations()}<==
@@ -307,13 +325,7 @@ class ViewWriter extends Writer {
         }
 
         componentDidMount() {
-          ==>${this[_].scripts.length ? freeText(`
-            const node = ReactDOM.findDOMNode(this)
-            const nodeDoc = fabricateDocument(node)
-            const nodeWin = fabricateWindow(window)
-
-            ==>${this[_].composeScriptsInvocations()}<==
-          `) : ''}<==
+          ==>${this[_].composeScriptsInvocations()}<==
         }
 
         render() {
@@ -357,7 +369,9 @@ class ViewWriter extends Writer {
   }
 
   _composeScriptsInvocations() {
-    const invoke = freeScope('eval(arguments[0])', 'nodeWin', {
+    if (!this[_].scripts) return ''
+
+    const invoke = freeScope('eval(arguments[0])', 'window', {
       'script': null,
     })
 
