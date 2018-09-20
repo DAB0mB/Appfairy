@@ -41,6 +41,14 @@ class StyleWriter extends Writer {
     this[_].baseUrl = String(baseUrl)
   }
 
+  get source() {
+    return this[_].source
+  }
+
+  set source(source) {
+    this[_].source = String(source)
+  }
+
   constructor(options = {}) {
     super()
 
@@ -48,6 +56,7 @@ class StyleWriter extends Writer {
 
     this.baseUrl = options.baseUrl
     this.prefetch = options.prefetch
+    this.source = options.srouce
   }
 
   async write(dir, options) {
@@ -83,7 +92,7 @@ class StyleWriter extends Writer {
         ? await fetch(style.body).then(res => res.text())
         : await requireText.promise(`${this.baseUrl}/${style.body}`)
 
-      return fs.writeFile(`${dir}/${styleFileName}`, transformSheet(sheet))
+      return fs.writeFile(`${dir}/${styleFileName}`, this[_].transformSheet(sheet))
     })
 
     const stylesIndexContent = styleFileNames.map((styleFileName) => {
@@ -128,7 +137,7 @@ class StyleWriter extends Writer {
   _composeStyleLoader() {
     this[_].styles.forEach((style) => {
       if (style.type == 'sheet') {
-        style.body = transformSheet(style.body)
+        style.body = this[_].transformSheet(style.body)
       }
     })
 
@@ -191,26 +200,44 @@ class StyleWriter extends Writer {
                 .replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-view $1$2')
                 .replace(/\\.af-view html/g, '.af-view')
                 .replace(/\\.af-view body/g, '.af-view')
+                ==>${this[_].composeSourceReplacements()}<==
             }
           })
         })
       })
     `)
   }
-}
 
-// Will minify and encapsulate classes
-function transformSheet(sheet) {
-  sheet = encapsulateCSS(sheet)
-  sheet = cleanCSS.minify(sheet).styles
+  _composeSourceReplacements() {
+    switch (this.source) {
+      case 'webflow': return `
+        .replace(/af-class-w-/g, 'w-')
+      `
+      case 'sketch': return `
+        .replace(/af-class-anima-/g, 'anima-')
+        .replace(/af-class-([\\w_-]+)an-animation([\\w_-]+)/g, '$1an-animation$2')
+      `
+      default: return `
+        .replace(/af-class-w-/g, 'w-')
+        .replace(/af-class-anima-/g, 'anima-')
+        .replace(/af-class-([\\w_-]+)an-animation([\\w_-]+)/g, '$1an-animation$2')
+      `
+    }
+  }
 
-  // Make URLs absolute so webpack won't throw any errors
-  return sheet.replace(/url\(([^)]+)\)/g, (match, url) => {
-    if (/^(.+):\/\//.test(url)) return match
+  // Will minify and encapsulate classes
+  _transformSheet(sheet) {
+    sheet = encapsulateCSS(sheet, this.source)
+    sheet = cleanCSS.minify(sheet).styles
 
-    url = path.resolve('/', url)
-    return `url(${url})`
-  })
+    // Make URLs absolute so webpack won't throw any errors
+    return sheet.replace(/url\(([^)]+)\)/g, (match, url) => {
+      if (/^(.+):\/\//.test(url)) return match
+
+      url = path.resolve('/', url)
+      return `url(${url})`
+    })
+  }
 }
 
 export default StyleWriter

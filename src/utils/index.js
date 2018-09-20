@@ -17,7 +17,7 @@ export const escape = (str, quote) => {
 }
 
 // Encapsulates all rules under .af-view
-export const encapsulateCSS = (css) => {
+export const encapsulateCSS = (css, source) => {
   return css.replace(
     /((?:^|\{|\}|;)\s*(?:\/\*[^]*?\*\/\s*)*)([^@{}]+?)(\s*\{)/g, (
     match, left, rule, right
@@ -35,6 +35,23 @@ export const encapsulateCSS = (css) => {
       .replace(/([^\s][^,]*)(\s*,?)/g, '.af-view $1$2')
       .replace(/\.af-view html/g, '.af-view')
       .replace(/\.af-view body/g, '.af-view')
+
+    switch (source) {
+      case 'webflow':
+        rule = rule
+          .replace(/af-class-w-/g, 'w-')
+        break
+      case 'sketch':
+        rule = rule
+          .replace(/af-class-anima-/g, 'anima-')
+          .replace(/af-class-([\w_-]+)an-animation([\w_-]+)/g, '$1an-animation$2')
+        break
+      default:
+        rule = rule
+          .replace(/af-class-w-/g, 'w-')
+          .replace(/af-class-anima-/g, 'anima-')
+          .replace(/af-class-([\w_-]+)an-animation([\w_-]+)/g, '$1an-animation$2')
+    }
 
     return `${left}${rule}${right}`
   })

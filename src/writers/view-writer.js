@@ -120,7 +120,7 @@ class ViewWriter extends Writer {
     $('style').each((i, el) => {
       const $el = $(el)
       const html = $el.html()
-      const css = encapsulateCSS(html)
+      const css = encapsulateCSS(html, this.srouce)
 
       $el.html(css)
     })
@@ -237,12 +237,21 @@ class ViewWriter extends Writer {
     return this[_].sockets && [...this[_].sockets]
   }
 
-  constructor(props) {
+  get source() {
+    return this[_].source
+  }
+
+  set source(source) {
+    this[_].source = String(source)
+  }
+
+  constructor(options) {
     super()
 
     this[_].children = []
-    this.name = props.name
-    this.html = props.html
+    this.name = options.name
+    this.html = options.html
+    this.source = options.source
   }
 
   async write(dir, ctrlsDir) {

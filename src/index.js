@@ -27,7 +27,8 @@ export const transpile = async (config) => {
 
   const styleWriter = new StyleWriter({
     baseUrl: config.input,
-    prefetch: config.prefetch
+    prefetch: config.prefetch,
+    source: config.srouce,
   })
 
   const transpilingHTMLFiles = htmlFiles.map((htmlFile) => {
@@ -82,6 +83,7 @@ const transpileHTMLFile = async (
   const viewWriter = new ViewWriter({
     name: htmlFile.split('.').slice(0, -1).join('.'),
     baseUrl: config.baseUrl,
+    source: config.source,
   })
 
   setScripts(scriptWriter, $head, $)
