@@ -170,6 +170,7 @@ class ViewWriter extends Writer {
         name: elName,
         html: $.html($el),
         baseUrl: this.baseUrl,
+        styles: this.styles,
       })
 
       children.push(child)
@@ -270,8 +271,8 @@ class ViewWriter extends Writer {
   constructor(options) {
     super()
 
-    this[_].styles = []
     this[_].children = []
+    this[_].styles = options.styles || []
 
     this.name = options.name
     this.html = options.html
