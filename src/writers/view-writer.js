@@ -243,6 +243,10 @@ class ViewWriter extends Writer {
     return this[_].scripts ? this[_].scripts.slice() : []
   }
 
+  get styles() {
+    return this[_].styles.slice()
+  }
+
   get html() {
     return this[_].html
   }
@@ -266,7 +270,9 @@ class ViewWriter extends Writer {
   constructor(options) {
     super()
 
+    this[_].styles = []
     this[_].children = []
+
     this.name = options.name
     this.html = options.html
     this.source = options.source
@@ -289,6 +295,28 @@ class ViewWriter extends Writer {
     ])
 
     return childFilePaths
+  }
+
+  setStyle(href, content) {
+    let type
+    let body
+
+    if (href) {
+      type = 'href'
+      body = /^\w+:\/\//.test(href) ? href : path.resolve('/', href)
+    }
+    else {
+      type = 'sheet'
+      body = content
+    }
+
+    const exists = this[_].styles.some((style) => {
+      return style.body == body
+    })
+
+    if (!exists) {
+      this[_].styles.push({ type, body })
+    }
   }
 
   _compose(ctrlsDir) {
@@ -334,13 +362,42 @@ class ViewWriter extends Writer {
           }
 
           return (
-            ==>${this.jsx}<==
+            <span>
+              <style dangerouslySetInnerHTML={{ __html: \`
+                ==>${this[_].composeStyleImports()}<==
+              \` }} />
+              ==>${this.jsx}<==
+            </span>
           )
         }
       }
 
       module.exports = ${this.className}
     `)
+  }
+
+  _composeStyleImports() {
+    const hrefs = this[_].styles.map(({ type, body }) => {
+      return type == 'href' && body
+    }).filter(Boolean)
+
+    const sheets = this[_].styles.map(({ type, body }) => {
+      return type == 'sheet' && body
+    }).filter(Boolean)
+
+    let css = ''
+
+    css += hrefs.map((href) => {
+      return `@import url(${href});`
+    }).join('\n')
+
+    css += '\n\n'
+
+    css += sheets.map((sheet) => {
+      return sheet
+    }).join('\n\n')
+
+    return escape(css.trim())
   }
 
   _composeProxiesDefault() {

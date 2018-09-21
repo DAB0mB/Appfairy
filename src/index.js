@@ -88,7 +88,7 @@ const transpileHTMLFile = async (
   })
 
   setScripts(scriptWriter, $head, $)
-  setStyles(styleWriter, $head, $)
+  setStyles(viewWriter, styleWriter, $head, $)
   setHTML(viewWriter, $body, $)
 
   return viewWriter
@@ -125,7 +125,7 @@ const makePublicDir = async (config, publicSubDirs) => {
   return relativePaths
 }
 
-const setScripts = async (scriptWriter, $head) => {
+const setScripts = (scriptWriter, $head) => {
   const $scripts = $head.find('script[type="text/javascript"]')
 
   $scripts.each((i, script) => {
@@ -135,7 +135,7 @@ const setScripts = async (scriptWriter, $head) => {
   })
 }
 
-const setStyles = async (styleWriter, $head) => {
+const setStyles = (viewWriter, styleWriter, $head) => {
   let $styles
 
   $styles = $head.find('link[rel="stylesheet"][type="text/css"]')
@@ -143,6 +143,7 @@ const setStyles = async (styleWriter, $head) => {
   $styles.each((i, style) => {
     const $style = $head.find(style)
 
+    viewWriter.setStyle($style.attr('href'), $style.html())
     styleWriter.setStyle($style.attr('href'), $style.html())
   })
 
@@ -151,6 +152,7 @@ const setStyles = async (styleWriter, $head) => {
   $styles.each((i, style) => {
     const $style = $head.find(style)
 
+    viewWriter.setStyle($style.attr('href'), $style.html())
     styleWriter.setStyle($style.attr('href'), $style.html())
   })
 }
