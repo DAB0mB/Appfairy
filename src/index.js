@@ -2,6 +2,7 @@ import cheerio from 'cheerio'
 import path from 'path'
 import git from './git'
 import { fs, ncp, reread } from './libs'
+import { encapsulateCSS } from './utils'
 import { ViewWriter, ScriptWriter, StyleWriter } from './writers'
 
 export const transpile = async (config) => {
@@ -93,25 +94,35 @@ const transpileHTMLFile = async (
   return viewWriter
 }
 
-const makePublicDir = (config, publicSubDirs) => {
+const makePublicDir = async (config, publicSubDirs) => {
   const publicDir = config.output.public
 
-  const makingPublicSubDirs = publicSubDirs.map((publicSubDir) => {
+  await Promise.all(publicSubDirs.map((publicSubDir) => {
     return ncp(
       `${config.input}/${publicSubDir}`,
       `${publicDir}/${publicSubDir}`,
     )
+  }))
+
+  // Resolving relative paths
+  const filePaths = await reread(config.input)
+
+  const relativePaths = filePaths.map((filePath) => {
+    const relativePath = path.relative(config.input, filePath)
+
+    return `${publicDir}/${relativePath}`
   })
 
-  return Promise.all(makingPublicSubDirs).then(async () => {
-    const filePaths = await reread(config.input)
+  // Encapsulate CSS files
+  await Promise.all(relativePaths.map(async (relativePath) => {
+    if (path.extname(relativePath) != '.css') return
 
-    return filePaths.map((filePath) => {
-      const relativePath = path.relative(config.input, filePath)
+    let css = (await fs.readFile(relativePath)).toString()
+    css = encapsulateCSS(css, config.source)
+    await fs.writeFile(relativePath, css)
+  }))
 
-      return `${publicDir}/${relativePath}`
-    })
-  })
+  return relativePaths
 }
 
 const setScripts = async (scriptWriter, $head) => {
