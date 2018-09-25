@@ -105,7 +105,7 @@ The output can be controlled using a config file named `appfairy_config.js` whic
 
 - **prefetch (boolean)** - Prefetch the styles and scripts which are necessary for the design to work. If not specified, the scripts and styles will be fetched during runtime. An example app with prefetching enabled can be found [here](https://github.com/DAB0mB/Appfairy/tree/master/examples/nofetch).
 
-- **source (source)** - Can either be set to `webflow`, `sketch` and represents the studio name that generated the basic CSS and HTML assets. If not set there will be little to no difference in the transpilation process but it will however make the CSS encapsulation more accurate.
+- **source (source)** - Can either be set to `webflow`, `sketch` and represents the studio name that generated the basic CSS and HTML assets. If not set there will be little to no difference in the transpilation process but it will however make the CSS encapsulation more accurate. Examples for Webflow and Sketch apps can be found [here](https://github.com/DAB0mB/Appfairy/tree/master/examples).
 
 - **input (string)** - The input dir for the Webflow exported files. Defaults to `.appfairy` dir in the root of the project.
 
