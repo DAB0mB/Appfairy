@@ -3,6 +3,8 @@
 const React = require('react')
 
 exports.transformProxies = (children = []) => {
+  children = [].concat(children).filter(Boolean)
+
   const proxies = {}
 
   React.Children.forEach(children, (child) => {
