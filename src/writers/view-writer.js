@@ -116,7 +116,7 @@ class ViewWriter extends Writer {
     }
 
     const children = this[_].children = []
-    const $ = cheerio.load(html)
+    const $ = cheerio.load(html, { xmlMode: true })
 
     // Encapsulate styles
     $('style').each((i, el) => {
@@ -208,7 +208,7 @@ class ViewWriter extends Writer {
     })
 
     // Wrapping with .af-view will apply encapsulated CSS
-    const $body = $('body')
+    const $body = $.root().children().first()
     const $afContainer = $('<span class="af-view"></span>')
 
     $afContainer.append($body.contents())
@@ -469,11 +469,11 @@ function bindJSX(jsx, children = []) {
   return jsx
     // Open close
     .replace(
-      /<([\w._-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g, (
+      /<([\w_-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g, (
       match, el, sock, attrs, children
     ) => (
       // If there are nested sockets
-      /<[\w._-]+-af-sock-[\w._-]+/.test(children) ? (
+      /<[\w_-]+-af-sock-[\w_-]+/.test(children) ? (
         `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{createScope(props.children, proxies => <React.Fragment>${bindJSX(children)}</React.Fragment>)}</${el}>)}`
       ) : (
         `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{props.children ? props.children : <React.Fragment>${children}</React.Fragment>}</${el}>)}`
@@ -481,7 +481,7 @@ function bindJSX(jsx, children = []) {
     ))
     // Self closing
     .replace(
-      /<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g, (
+      /<([\w_-]+)-af-sock-([\w_-]+)(.*?) \/>/g, (
       match, el, sock, attrs
     ) => (
       `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{props.children}</${el}>)}`

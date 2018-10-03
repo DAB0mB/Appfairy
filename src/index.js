@@ -77,7 +77,7 @@ const transpileHTMLFile = async (
   styleWriter,
 ) => {
   const html = (await fs.readFile(`${config.input}/${htmlFile}`)).toString()
-  const $ = cheerio.load(html)
+  const $ = cheerio.load(html, { xmlMode: true })
   const $head = $('head')
   const $body = $('body')
 
