@@ -70,7 +70,9 @@ This way the view can be changed without us worrying about re-binding the event 
 For an in-depth explanation regards Appfairy be sure to check-out the following:
 
 - [Medium blog post](https://medium.com/@eytanmanor/how-to-create-a-react-app-out-of-a-webflow-project-309b696a0533) - An introduction to Appfairy and the motives behind it.
+
 - [YouTube video](https://www.youtube.com/watch?v=6hJe6pZld0o) - I walk through Appfairy and an implementation of an example app.
+
 - [Example app](https://github.com/DAB0mB/Appfairy/tree/master/examples/prefetch) - An example for a simple app which uses Appfairy.
 
 ## Docs
@@ -84,23 +86,39 @@ After exporting your Webflow project into a zip file, simply unzip it into a dir
 The commit consists of the following files (regardless if they were added, modified or deleted):
 
 - **public/** (public assets which should be served by our app's server)
+
   - **images/**
+
   - **fonts/**
+
   - **css/**
+
 - **src/**
+
   - **scripts/** (scripts that should be imported in index.js)
+
   - **styles/** (css files that should be imported in index.js)
+
   - **views/** (contains ConsultFormView - further explanation below)
 
 The output can be controlled using a config file named `appfairy_config.js` which should be located in the root of the project. The config file may (or may not) include some of the following options:
 
-- **nofetch (boolean)** - Will disable prefetching of styles and scripts which are necessary for the design to work. If specified, the scripts and styles will be fetched during runtime. An example app with runtime fetching can be found [here](https://github.com/DAB0mB/Appfairy/tree/master/examples/nofetch).
+- **prefetch (boolean)** - Prefetch the styles and scripts which are necessary for the design to work. If not specified, the scripts and styles will be fetched during runtime. An example app with prefetching enabled can be found [here](https://github.com/DAB0mB/Appfairy/tree/master/examples/nofetch).
+
+- **source (source)** - Can either be set to `webflow`, `sketch` and represents the studio name that generated the basic CSS and HTML assets. If not set there will be little to no difference in the transpilation process but it will however make the CSS encapsulation more accurate. Examples for Webflow and Sketch apps can be found [here](https://github.com/DAB0mB/Appfairy/tree/master/examples).
+
 - **input (string)** - The input dir for the Webflow exported files. Defaults to `.appfairy` dir in the root of the project.
+
 - **output (string/object)** - If a string was provided, the output will be mapped to the specified dir. If an object, each key in the object will map its asset type to the specified dir in the value. The object has the following schema:
+
   - **public (string)** - Public dir. Defaults to `public`.
+
   - **src (string/object)** - Source dir. If a string is provided, all its content will be mapped to the specified dir, otherwise the mapping will be done according to the following object:
+
     - **scripts (string)** - Scripts dir. Defaults to `src/scripts`.
+
     - **styles (string)** - Scripts dir. Defaults to `src/styles`.
+
     - **views (string)** - Scripts dir. Defaults to `src/views`.
 
 Alternatively, you may provide (extra) options through the command line like the following:
@@ -109,9 +127,14 @@ Alternatively, you may provide (extra) options through the command line like the
 
 The CLI tool supports the following options:
 
-- **--nofetch**
+- **--prefetch**
+
+- **--source/--src**
+
 - **--input/--in**
+
 - **--output/--out**
+
 - **--config**
 
 The behavior of Appfairy will change according to the specified options as detailed above, and the rest is self explanatory.

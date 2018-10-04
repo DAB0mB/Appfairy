@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css?family=Arvo:400,700');
+
+
+.af-view .af-class-burger {
+  width               : 100%;
+  min-width           : 750px;
+  height              : 100%;
+  min-height          : 1334px;
+  position            : relative;
+  overflow            : hidden;
+  margin              : 0px;
+  background          : rgba(255, 255, 255, 1.0);
+}
+.af-view a {
+  text-decoration     : none;
+}
+.af-view div {
+  -webkit-text-size-adjust: none;
+}
+.af-view .af-class-burger .af-class-content {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 166px;
+  height              : 1726px;
+  width               : 650px;
+  position            : absolute;
+  margin              : 0;
+  left                : 50px;
+}
+.af-view .af-class-burger .af-class-content .af-class-titre {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 570px;
+  height              : 178px;
+  width               : 650px;
+  position            : absolute;
+  margin              : 0;
+  left                : 0px;
+}
+.af-view .af-class-burger .af-class-content .af-class-titre .af-class-subtitle {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 148px;
+  height              : 22px;
+  width               : 167px;
+  position            : absolute;
+  margin              : 0;
+  left                : 1px;
+}
+.af-view .af-class-burger .af-class-content .af-class-titre .af-class-title {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 8px;
+  height              : 103px;
+  width               : 576px;
+  position            : absolute;
+  margin              : 0;
+  left                : 2px;
+}
+.af-view .af-class-burger .af-class-content .af-class-lorem-ipsum-dolor-si {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 798px;
+  height              : 932px;
+  width               : 645px;
+  position            : absolute;
+  margin              : 0;
+  left                : 0px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 0px;
+  height              : 490px;
+  width               : 558px;
+  position            : absolute;
+  margin              : 0;
+  left                : 45px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid218 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 452px;
+  height              : 42px;
+  width               : 492px;
+  position            : absolute;
+  margin              : 0;
+  left                : 34px;
+  opacity             : 0.15;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid374 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 252px;
+  height              : 156px;
+  width               : 480px;
+  position            : absolute;
+  margin              : 0;
+  left                : 40px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid374 .af-class-x-mlid414 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 6px;
+  height              : 147px;
+  width               : 464px;
+  position            : absolute;
+  margin              : 0;
+  left                : 8px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid374 .af-class-x-mlid412 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 4px;
+  height              : 120px;
+  width               : 480px;
+  position            : absolute;
+  margin              : 0;
+  left                : 0px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid374 .af-class-x-mlid412 .af-class-x-mlid413 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 2px;
+  height              : 114px;
+  width               : 465px;
+  position            : relative;
+  margin              : 0;
+  left                : 7px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid374 .af-class-x-mlid411 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 0px;
+  height              : 159px;
+  width               : 476px;
+  position            : absolute;
+  margin              : 0;
+  left                : 2px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid136 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 100px;
+  height              : 245px;
+  width               : 536px;
+  position            : absolute;
+  margin              : 0;
+  left                : 12px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid136 .af-class-x-mlid373 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 0px;
+  height              : 245px;
+  width               : 536px;
+  position            : relative;
+  margin              : 0;
+  left                : 0px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid135 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 160px;
+  height              : 158px;
+  width               : 558px;
+  position            : absolute;
+  margin              : 0;
+  left                : 0px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid116 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 167px;
+  height              : 114px;
+  width               : 464px;
+  position            : absolute;
+  margin              : 0;
+  left                : 63px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid115 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 226px;
+  height              : 125px;
+  width               : 126px;
+  position            : absolute;
+  margin              : 0;
+  left                : 174px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 0px;
+  height              : 252px;
+  width               : 480px;
+  position            : absolute;
+  margin              : 0;
+  left                : 40px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid111 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 0px;
+  height              : 252px;
+  width               : 480px;
+  position            : absolute;
+  margin              : 0;
+  left                : 0px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid111 .af-class-x-mlid114 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 6px;
+  height              : 240px;
+  width               : 464px;
+  position            : absolute;
+  margin              : 0;
+  left                : 8px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid111 .af-class-x-mlid113 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 132px;
+  height              : 114px;
+  width               : 464px;
+  position            : absolute;
+  margin              : 0;
+  left                : 8px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid111 .af-class-x-mlid112 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 0px;
+  height              : 252px;
+  width               : 476px;
+  position            : absolute;
+  margin              : 0;
+  left                : 2px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid110 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 67px;
+  height              : 43px;
+  width               : 53px;
+  position            : absolute;
+  margin              : 0;
+  left                : 88px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid109 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 87px;
+  height              : 52px;
+  width               : 46px;
+  position            : absolute;
+  margin              : 0;
+  left                : 173px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid108 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 67px;
+  height              : 43px;
+  width               : 53px;
+  position            : absolute;
+  margin              : 0;
+  left                : 339px;
+}
+.af-view .af-class-burger .af-class-content .af-class-x-mlid1517 .af-class-x-mlid106 .af-class-x-mlid107 {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 87px;
+  height              : 52px;
+  width               : 46px;
+  position            : absolute;
+  margin              : 0;
+  left                : 261px;
+}
+.af-view .af-class-burger .af-class-icon-close {
+  background          : rgba(255, 255, 255, 0.0);
+  top                 : 62px;
+  height              : 32px;
+  width               : 32px;
+  position            : absolute;
+  margin              : 0;
+  left                : 654px;
+}
+/* .anima-animate-appear prefix for appear animations */
+.af-view .anima-animate-appear {
+  opacity             : 0;
+  display             : block;
+  -webkit-animation   : anima-reveal 0.3s ease-in-out 1 normal forwards;
+  -moz-animation      : anima-reveal 0.3s ease-in 1 normal forwards;
+  -o-animation        : anima-reveal 0.3s ease-in-out 1 normal forwards;
+  animation           : anima-reveal 0.3s ease-in-out 1 normal forwards;
+}
+.af-view .anima-animate-disappear {
+  opacity             : 1;
+  display             : block;
+  -webkit-animation   : anima-reveal 0.3s ease-in-out 1 reverse forwards;
+  -moz-animation      : anima-reveal 0.3s ease-in 1 normal forwards;
+  -o-animation        : anima-reveal 0.3s ease-in-out 1 reverse forwards;
+  animation           : anima-reveal 0.3s ease-in-out 1 reverse forwards;
+}
+.af-view .anima-animate-nodelay {
+  -webkit-animation-delay: 0;
+  -moz-animation-delay: 0;
+  -o-animation-delay  : 0;
+  animation-delay     : 0;
+}
+@-webkit-keyframes anima-reveal {
+  0%
+   
+  {
+      opacity: 0;
+    }
+  
+    
+  100%
+   
+  {
+      opacity: 1;
+    }
+}
+@-moz-keyframes anima-reveal {
+  0%
+   
+  {
+      opacity: 0;
+    }
+  
+    
+  100%
+   
+  {
+      opacity: 1;
+    }
+}
+@-o-keyframes anima-reveal {
+  0%
+   
+  {
+      opacity: 0;
+    }
+  
+    
+  100%
+   
+  {
+      opacity: 1;
+    }
+}
+@keyframes anima-reveal {
+  0%
+   
+  {
+      opacity: 0;
+    }
+  
+    
+  100%
+   
+  {
+      opacity: 1;
+    }
+}

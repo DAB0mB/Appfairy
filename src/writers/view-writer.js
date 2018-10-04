@@ -1,8 +1,10 @@
+import * as babel from 'babel-core'
 import cheerio from 'cheerio'
 import HTMLtoJSX from 'htmltojsx'
 import path from 'path'
 import statuses from 'statuses'
 import uglify from 'uglify-js'
+import { ensureGlobals } from '../babel-plugins'
 import { fs, mkdirp } from '../libs'
 import raw from '../raw'
 import Writer from './writer'
@@ -114,13 +116,13 @@ class ViewWriter extends Writer {
     }
 
     const children = this[_].children = []
-    const $ = cheerio.load(html)
+    const $ = cheerio.load(html, { xmlMode: true })
 
     // Encapsulate styles
     $('style').each((i, el) => {
       const $el = $(el)
       const html = $el.html()
-      const css = encapsulateCSS(html)
+      const css = encapsulateCSS(html, this.srouce)
 
       $el.html(css)
     })
@@ -131,6 +133,24 @@ class ViewWriter extends Writer {
 
       if (className && !/af-class-/.test(className)) {
         className = className.replace(/([\w_-]+)/g, 'af-class-$1')
+
+        switch (this.source) {
+          case 'webflow':
+            className = className
+              .replace(/af-class-w-/g, 'w-')
+            break
+          case 'sketch':
+            className = className
+              .replace(/af-class-anima-/g, 'anima-')
+              .replace(/af-class-([\w_-]+)an-animation([\w_-]+)/g, '$1an-animation$2')
+            break
+          default:
+            className = className
+              .replace(/af-class-w-/g, 'w-')
+              .replace(/af-class-anima-/g, 'anima-')
+              .replace(/af-class-([\w_-]+)an-animation([\w_-]+)/g, '$1an-animation$2')
+        }
+
         $el.attr('class', className)
       }
     })
@@ -152,6 +172,7 @@ class ViewWriter extends Writer {
         name: elName,
         html: $.html($el),
         baseUrl: this.baseUrl,
+        styles: this.styles,
       })
 
       children.push(child)
@@ -187,7 +208,7 @@ class ViewWriter extends Writer {
     })
 
     // Wrapping with .af-view will apply encapsulated CSS
-    const $body = $('body')
+    const $body = $.root().children().first()
     const $afContainer = $('<span class="af-view"></span>')
 
     $afContainer.append($body.contents())
@@ -225,6 +246,10 @@ class ViewWriter extends Writer {
     return this[_].scripts ? this[_].scripts.slice() : []
   }
 
+  get styles() {
+    return this[_].styles.slice()
+  }
+
   get html() {
     return this[_].html
   }
@@ -237,12 +262,23 @@ class ViewWriter extends Writer {
     return this[_].sockets && [...this[_].sockets]
   }
 
-  constructor(props) {
+  get source() {
+    return this[_].source
+  }
+
+  set source(source) {
+    this[_].source = String(source)
+  }
+
+  constructor(options) {
     super()
 
     this[_].children = []
-    this.name = props.name
-    this.html = props.html
+    this[_].styles = options.styles || []
+
+    this.name = options.name
+    this.html = options.html
+    this.source = options.source
   }
 
   async write(dir, ctrlsDir) {
@@ -264,11 +300,33 @@ class ViewWriter extends Writer {
     return childFilePaths
   }
 
+  setStyle(href, content) {
+    let type
+    let body
+
+    if (href) {
+      type = 'href'
+      body = /^\w+:\/\//.test(href) ? href : path.resolve('/', href)
+    }
+    else {
+      type = 'sheet'
+      body = content
+    }
+
+    const exists = this[_].styles.some((style) => {
+      return style.body == body
+    })
+
+    if (!exists) {
+      this[_].styles.push({ type, body })
+    }
+  }
+
   _compose(ctrlsDir) {
     return freeLint(`
       const React = require('react')
       const ReactDOM = require('react-dom')
-      const { createScope, fabricateDocument, fabricateWindow, map, transformProxies } = require('./helpers')
+      const { createScope, transformProxies, map } = require('./helpers')
       ==>${this[_].composeChildImports()}<==
       const scripts = [
         ==>${this[_].composeScriptsDeclerations()}<==
@@ -298,13 +356,7 @@ class ViewWriter extends Writer {
         }
 
         componentDidMount() {
-          ==>${this[_].scripts.length ? freeText(`
-            const node = ReactDOM.findDOMNode(this)
-            const nodeDoc = fabricateDocument(node)
-            const nodeWin = fabricateWindow(window)
-
-            ==>${this[_].composeScriptsInvocations()}<==
-          `) : ''}<==
+          ==>${this[_].composeScriptsInvocations()}<==
         }
 
         render() {
@@ -313,13 +365,42 @@ class ViewWriter extends Writer {
           }
 
           return (
-            ==>${this.jsx}<==
+            <span>
+              <style dangerouslySetInnerHTML={{ __html: \`
+                ==>${this[_].composeStyleImports()}<==
+              \` }} />
+              ==>${this.jsx}<==
+            </span>
           )
         }
       }
 
       module.exports = ${this.className}
     `)
+  }
+
+  _composeStyleImports() {
+    const hrefs = this[_].styles.map(({ type, body }) => {
+      return type == 'href' && body
+    }).filter(Boolean)
+
+    const sheets = this[_].styles.map(({ type, body }) => {
+      return type == 'sheet' && body
+    }).filter(Boolean)
+
+    let css = ''
+
+    css += hrefs.map((href) => {
+      return `@import url(${href});`
+    }).join('\n')
+
+    css += '\n\n'
+
+    css += sheets.map((sheet) => {
+      return sheet
+    }).join('\n\n')
+
+    return escape(css.trim())
   }
 
   _composeProxiesDefault() {
@@ -341,14 +422,26 @@ class ViewWriter extends Writer {
 
   _composeScriptsDeclerations() {
     return this[_].scripts.map((script) => {
-      return script.type == 'src'
-        ? `fetch("${script.body}").then(body => body.text()),`
-        : `Promise.resolve("${escape(uglify.minify(script.body).code)}"),`
+      if (script.type == 'src') {
+        // TODO: Prefetch babel transform
+        return `fetch("${script.body}").then(body => body.text()),`
+      }
+
+      // Ensure globals
+      const body = babel.transform(script.body, {
+        plugins: [ensureGlobals],
+        code: true,
+        ast: false,
+      }).code
+
+      return `Promise.resolve("${escape(uglify.minify(body).code)}"),`
     }).join('\n')
   }
 
   _composeScriptsInvocations() {
-    const invoke = freeScope('eval(arguments[0])', 'nodeWin', {
+    if (!this[_].scripts) return ''
+
+    const invoke = freeScope('eval(arguments[0])', 'window', {
       'script': null,
     })
 
@@ -376,11 +469,11 @@ function bindJSX(jsx, children = []) {
   return jsx
     // Open close
     .replace(
-      /<([\w._-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g, (
+      /<([\w_-]+)-af-sock-([\w_-]+)(.*?)>([^]*)<\/\1-af-sock-\2>/g, (
       match, el, sock, attrs, children
     ) => (
       // If there are nested sockets
-      /<[\w._-]+-af-sock-[\w._-]+/.test(children) ? (
+      /<[\w_-]+-af-sock-[\w_-]+/.test(children) ? (
         `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{createScope(props.children, proxies => <React.Fragment>${bindJSX(children)}</React.Fragment>)}</${el}>)}`
       ) : (
         `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{props.children ? props.children : <React.Fragment>${children}</React.Fragment>}</${el}>)}`
@@ -388,7 +481,7 @@ function bindJSX(jsx, children = []) {
     ))
     // Self closing
     .replace(
-      /<([\w._-]+)-af-sock-([\w_-]+)(.*?) \/>/g, (
+      /<([\w_-]+)-af-sock-([\w_-]+)(.*?) \/>/g, (
       match, el, sock, attrs
     ) => (
       `{map(proxies['${sock}'], props => <${el} ${mergeProps(attrs)}>{props.children}</${el}>)}`

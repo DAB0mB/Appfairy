@@ -41,6 +41,14 @@ class StyleWriter extends Writer {
     this[_].baseUrl = String(baseUrl)
   }
 
+  get source() {
+    return this[_].source
+  }
+
+  set source(source) {
+    this[_].source = String(source)
+  }
+
   constructor(options = {}) {
     super()
 
@@ -48,6 +56,7 @@ class StyleWriter extends Writer {
 
     this.baseUrl = options.baseUrl
     this.prefetch = options.prefetch
+    this.source = options.srouce
   }
 
   async write(dir, options) {
@@ -83,7 +92,7 @@ class StyleWriter extends Writer {
         ? await fetch(style.body).then(res => res.text())
         : await requireText.promise(`${this.baseUrl}/${style.body}`)
 
-      return fs.writeFile(`${dir}/${styleFileName}`, transformSheet(sheet))
+      return fs.writeFile(`${dir}/${styleFileName}`, this[_].transformSheet(sheet))
     })
 
     const stylesIndexContent = styleFileNames.map((styleFileName) => {
@@ -128,7 +137,7 @@ class StyleWriter extends Writer {
   _composeStyleLoader() {
     this[_].styles.forEach((style) => {
       if (style.type == 'sheet') {
-        style.body = transformSheet(style.body)
+        style.body = this[_].transformSheet(style.body)
       }
     })
 
@@ -175,42 +184,23 @@ class StyleWriter extends Writer {
         return loading
       })
 
-      module.exports = Promise.all(loadingStyles).then(() => {
-        const styleSheets = Array.from(document.styleSheets).filter((styleSheet) => {
-          return styleSheet.href && styles.some((style) => {
-            return style.type == 'href' && styleSheet.href.match(style.body)
-          })
-        })
-
-        styleSheets.forEach((styleSheet) => {
-          Array.from(styleSheet.rules).forEach((rule) => {
-            if (rule.selectorText) {
-              rule.selectorText = rule.selectorText
-                .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
-                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
-                .replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-view $1$2')
-                .replace(/\\.af-view html/g, '.af-view')
-                .replace(/\\.af-view body/g, '.af-view')
-            }
-          })
-        })
-      })
+      module.exports = Promise.all(loadingStyles)
     `)
   }
-}
 
-// Will minify and encapsulate classes
-function transformSheet(sheet) {
-  sheet = encapsulateCSS(sheet)
-  sheet = cleanCSS.minify(sheet).styles
+  // Will minify and encapsulate classes
+  _transformSheet(sheet) {
+    sheet = encapsulateCSS(sheet, this.source)
+    sheet = cleanCSS.minify(sheet).styles
 
-  // Make URLs absolute so webpack won't throw any errors
-  return sheet.replace(/url\(([^)]+)\)/g, (match, url) => {
-    if (/^(.+):\/\//.test(url)) return match
+    // Make URLs absolute so webpack won't throw any errors
+    return sheet.replace(/url\(([^)]+)\)/g, (match, url) => {
+      if (/^(.+):\/\//.test(url)) return match
 
-    url = path.resolve('/', url)
-    return `url(${url})`
-  })
+      url = path.resolve('/', url)
+      return `url(${url})`
+    })
+  }
 }
 
 export default StyleWriter

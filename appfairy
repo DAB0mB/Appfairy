@@ -5,27 +5,121 @@ const findRoot = require('find-root')
 const fs = require('fs')
 const minimist = require('minimist')
 const path = require('path')
+const pack = require('./package.json')
 
 const root = findRoot(process.cwd())
 
 let {
   input,
   output,
+  source,
   config,
-  nofetch,
+  prefetch,
+  help,
+  version,
 } = minimist(process.argv.slice(2), {
-  string: ['output', 'input', 'config'],
-  boolean: ['nofetch'],
+  string: ['output', 'input', 'source', 'config'],
+  boolean: ['prefetch', 'help'],
   alias: {
     in: 'input',
-    out: 'output'
+    out: 'output',
+    src: 'source',
+    cfg: 'config',
   },
   default: {
-    nofetch: false,
+    prefetch: false,
+    help: false,
     input: `${root}/.appfairy`,
     output: root,
+    source: '',
   },
 })
+
+if (help) {
+  console.log(`
+usage: appfairy [--version] [--help] [--in | --input <path>] [--out | --output <path>]
+                [--src | --source <name>] [--cfg | --config <path>] [--prefetch]
+
+After exporting your Webflow project into a zip file, simply unzip it into a directory called \`.appfairy\`
+in the root of your project and run \`$ appfairy\`. Be sure to stash all your git changes as beforehand as
+Appfairy uses git as a version control. After doing so you'll notice that a new git-commit has been created
+saying \`appfairy: Migrate\`. This commit include all the changes that Appfairy has made, and shouldn't be
+edited or reworded.
+
+The commit consists of the following files (regardless if they were added, modified or deleted):
+
+- **public/** (public assets which should be served by our app's server)
+
+  - **images/**
+
+  - **fonts/**
+
+  - **css/**
+
+- **src/**
+
+  - **scripts/** (scripts that should be imported in index.js)
+
+  - **styles/** (css files that should be imported in index.js)
+
+  - **views/** (contains ConsultFormView - further explanation below)
+
+The output can be controlled using a config file named \`appfairy_config.js\` which should be located in
+the root of the project. The config file may (or may not) include some of the following options:
+
+- **prefetch (boolean)** - Prefetch the styles and scripts which are necessary for the design to work.
+  If not specified, the scripts and styles will be fetched during runtime.
+
+- **source (source)** - Can either be set to \`webflow\`, \`sketch\` and represents the studio name that
+  generated the basic CSS and HTML assets. If not set there will be little to no difference in the
+  transpilation process but it will however make the CSS encapsulation more accurate.
+
+- **input (string)** - The input dir for the Webflow exported files. Defaults to \`.appfairy\` dir in the
+  root of the project.
+
+- **output (string/object)** - If a string was provided, the output will be mapped to the specified dir.
+  If an object, each key in the object will map its asset type to the specified dir in the value.
+  The object has the following schema:
+
+  - **public (string)** - Public dir. Defaults to \`public\`.
+
+  - **src (string/object)** - Source dir. If a string is provided, all its content will be mapped to the
+    specified dir, otherwise the mapping will be done according to the following object:
+
+    - **scripts (string)** - Scripts dir. Defaults to \`src/scripts\`.
+
+    - **styles (string)** - Scripts dir. Defaults to \`src/styles\`.
+
+    - **views (string)** - Scripts dir. Defaults to \`src/views\`.
+
+Alternatively, you may provide (extra) options through the command line like the following:
+
+    $ appfairy [...options]
+
+The CLI tool supports the following options:
+
+- **--prefetch**
+
+- **--source/--src**
+
+- **--input/--in**
+
+- **--output/--out**
+
+- **--config**
+
+The behavior of Appfairy will change according to the specified options as detailed above,
+and the rest is self explanatory.
+`)
+
+  process.exit(0)
+}
+
+if (version) {
+  console.log(`appfairy version ${pack.version}`)
+
+  process.exit(0)
+}
 
 if (config) {
   config = path.resolve(process.cwd(), config)
@@ -41,7 +135,8 @@ catch (e) {
 const configBase = {
   input,
   output,
-  prefetch: !nofetch,
+  source,
+  prefetch,
   // Preserve original path
   __dirname: path.dirname(config || root),
 }
@@ -98,6 +193,9 @@ if (typeof config.output.src.views != 'string') {
 }
 if (typeof config.output.src.controllers != 'string') {
   throw TypeError('config.output.src.controllers must be a string')
+}
+if (typeof config.source != 'string') {
+  throw TypeError('config.source must be a string')
 }
 
 config.input = path.resolve(config.__dirname, config.input)
