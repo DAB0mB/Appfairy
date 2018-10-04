@@ -15,15 +15,15 @@ const styles = [
   },
   {
     type: 'href',
+    body: '/css/drink.css',
+  },
+  {
+    type: 'href',
     body: '/css/menuOverlay.css',
   },
   {
     type: 'href',
     body: '/css/home.css',
-  },
-  {
-    type: 'href',
-    body: '/css/drink.css',
   },
   {
     type: 'href',

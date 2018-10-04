@@ -10,8 +10,8 @@ class BurgerController extends React.Component {
     )
   }
 
-  close = {
-    this.props.history.pop()
+  close = () => {
+    this.props.history.goBack()
   }
 }
 

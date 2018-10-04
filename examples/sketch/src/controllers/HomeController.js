@@ -1,5 +1,6 @@
 import React from 'react'
 import HomeView from '../views/HomeView'
+import MenuOverlayController from './MenuoverlayController'
 
 class HomeController extends React.Component {
   state = {
@@ -8,18 +9,21 @@ class HomeController extends React.Component {
 
   render() {
     return (
-      <HomeView>
+      <React.Fragment>
+        <HomeView>
+          <menu onClick={this.showMenu} />
+          <cow onClick={this.navCow} />
+          <burger onClick={this.navBurger} />
+          <drink onClick={this.navDrink} />
+        </HomeView>
         {this.state.showingMenu && (
-          <menu
-            onClick={this.showMenu}
+          <MenuOverlayController
             hideMenu={this.hideMenu}
             location={this.props.location}
             history={this.props.history}
           />
         )}
-        <burger onClick={this.navBurger} />
-        <drink onClick={this.navDrink} />
-      </HomeView>
+      </React.Fragment>
     )
   }
 
@@ -33,6 +37,10 @@ class HomeController extends React.Component {
     this.setState({
       showingMenu: false
     })
+  }
+
+  navCow = () => {
+    this.props.history.push('/cow')
   }
 
   navBurger = () => {

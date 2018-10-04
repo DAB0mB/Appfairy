@@ -11,7 +11,7 @@ class CowController extends React.Component {
   }
 
   close = () => {
-    this.props.history.pop()
+    this.props.history.goBack()
   }
 }
 
