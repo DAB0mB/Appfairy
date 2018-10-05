@@ -184,8 +184,47 @@ class StyleWriter extends Writer {
         return loading
       })
 
-      module.exports = Promise.all(loadingStyles)
+      module.exports = Promise.all(loadingStyles).then(() => {
+        const styleSheets = Array.from(document.styleSheets).filter((styleSheet) => {
+          return styleSheet.href && styles.some((style) => {
+            return style.type == 'href' && styleSheet.href.match(style.body)
+          })
+        })
+        styleSheets.forEach((styleSheet) => {
+          Array.from(styleSheet.rules).forEach((rule) => {
+            if (rule.selectorText) {
+              rule.selectorText = rule.selectorText
+                .replace(/\\.([\\w_-]+)/g, '.af-class-$1')
+                .replace(/\\[class(.?)="( ?)([^"]+)( ?)"\\]/g, '[class$1="$2af-class-$3$4"]')
+                .replace(/([^\\s][^,]*)(\\s*,?)/g, '.af-view $1$2')
+                .replace(/\\.af-view html/g, '.af-view')
+                .replace(/\\.af-view body/g, '.af-view')
+                ==>${this[_].composeSourceReplacements()}<==
+            }
+          })
+        })
+      })
     `)
+  }
+
+  _composeSourceReplacements() {
+    switch (this.source) {
+      case 'webflow':
+        return freeText(`
+          .replace(/af-class-w-/g, 'w-')
+        `)
+      case 'sketch':
+        return freeText(`
+          .replace(/af-class-anima-/g, 'anima-')
+          .replace(/af-class-([\\w_-]+)an-animation([\\w_-]+)/g, '$1an-animation$2')
+        `)
+      default:
+        return freeText(`
+          .replace(/af-class-w-/g, 'w-')
+          .replace(/af-class-anima-/g, 'anima-')
+          .replace(/af-class-([\\w_-]+)an-animation([\\w_-]+)/g, '$1an-animation$2')
+        `)
+    }
   }
 
   // Will minify and encapsulate classes

@@ -116,7 +116,7 @@ class ViewWriter extends Writer {
     }
 
     const children = this[_].children = []
-    const $ = cheerio.load(html, { xmlMode: true })
+    const $ = cheerio.load(html)
 
     // Encapsulate styles
     $('style').each((i, el) => {
@@ -208,7 +208,7 @@ class ViewWriter extends Writer {
     })
 
     // Wrapping with .af-view will apply encapsulated CSS
-    const $body = $.root().children().first()
+    const $body = $('body')
     const $afContainer = $('<span class="af-view"></span>')
 
     $afContainer.append($body.contents())
