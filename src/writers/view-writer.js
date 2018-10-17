@@ -1,10 +1,8 @@
-import * as babel from 'babel-core'
 import cheerio from 'cheerio'
 import HTMLtoJSX from 'htmltojsx'
 import path from 'path'
 import statuses from 'statuses'
 import uglify from 'uglify-js'
-import { ensureGlobals } from '../babel-plugins'
 import { fs, mkdirp } from '../libs'
 import raw from '../raw'
 import Writer from './writer'
@@ -325,8 +323,7 @@ class ViewWriter extends Writer {
   _compose(ctrlsDir) {
     return freeLint(`
       const React = require('react')
-      const ReactDOM = require('react-dom')
-      const { createScope, transformProxies, map } = require('./helpers')
+      const { createScope, map, transformProxies } = require('./helpers')
       ==>${this[_].composeChildImports()}<==
       const scripts = [
         ==>${this[_].composeScriptsDeclerations()}<==
@@ -423,18 +420,10 @@ class ViewWriter extends Writer {
   _composeScriptsDeclerations() {
     return this[_].scripts.map((script) => {
       if (script.type == 'src') {
-        // TODO: Prefetch babel transform
         return `fetch("${script.body}").then(body => body.text()),`
       }
 
-      // Ensure globals
-      const body = babel.transform(script.body, {
-        plugins: [ensureGlobals],
-        code: true,
-        ast: false,
-      }).code
-
-      return `Promise.resolve("${escape(uglify.minify(body).code)}"),`
+      return `Promise.resolve("${escape(uglify.minify(script.body).code)}"),`
     }).join('\n')
   }
 
