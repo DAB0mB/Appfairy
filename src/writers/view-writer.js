@@ -188,6 +188,10 @@ class ViewWriter extends Writer {
     $('script').each((i, script) => {
       const $script = $(script)
       const src = $script.attr('src')
+      const type = $script.attr('type')
+
+      // We're only interested in JavaScript script tags
+      if (type && !/javascript/i.test(type)) return
 
       if (src) {
         this[_].scripts.push({
