@@ -88,7 +88,7 @@ class ScriptWriter extends Writer {
     })
 
     const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
-      return `require('./${scriptFileName}')`
+      return `import './${scriptFileName}'`
     }).join('\n')
 
     const writingIndex = fs.writeFile(
@@ -165,7 +165,7 @@ class ScriptWriter extends Writer {
         return loading
       }), Promise.resolve())
 
-      module.exports = loadingScripts
+      export default loadingScripts
     `)
   }
 }

@@ -96,7 +96,7 @@ class StyleWriter extends Writer {
     })
 
     const stylesIndexContent = styleFileNames.map((styleFileName) => {
-      return `require('./${styleFileName}')`
+      return `import './${styleFileName}'`
     }).join('\n')
 
     const writingIndex = fs.writeFile(
@@ -184,7 +184,7 @@ class StyleWriter extends Writer {
         return loading
       })
 
-      module.exports = Promise.all(loadingStyles).then(() => {
+      export default Promise.all(loadingStyles).then(() => {
         const styleSheets = Array.from(document.styleSheets).filter((styleSheet) => {
           return styleSheet.href && styles.some((style) => {
             return style.type == 'href' && styleSheet.href.match(style.body)

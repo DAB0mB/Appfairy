@@ -48,7 +48,7 @@ class ViewWriter extends Writer {
     })
 
     const index = viewWriters.map((viewWriter) => {
-      return `exports.${viewWriter.className} = require('./${viewWriter.className}')`
+      return `export { default as ${viewWriter.className} } from './${viewWriter.className}'`
     }).join('\n')
 
     const writingIndex = fs.writeFile(indexFilePath, freeLint(index))
@@ -326,8 +326,8 @@ class ViewWriter extends Writer {
 
   _compose(ctrlsDir) {
     return freeLint(`
-      const React = require('react')
-      const { createScope, map, transformProxies } = require('./helpers')
+      import React from 'react'
+      import { createScope, map, transformProxies } from './helpers'
       ==>${this[_].composeChildImports()}<==
       const scripts = [
         ==>${this[_].composeScriptsDeclerations()}<==
@@ -376,7 +376,7 @@ class ViewWriter extends Writer {
         }
       }
 
-      module.exports = ${this.className}
+      export default ${this.className}
     `)
   }
 
@@ -412,7 +412,7 @@ class ViewWriter extends Writer {
 
   _composeChildImports() {
     const imports = this[_].children.map((child) => {
-      return `const ${child.className} = require('./${child.className}')`
+      return `import ${child.className} from './${child.className}'`
     })
 
     // Line skip
