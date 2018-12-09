@@ -427,7 +427,11 @@ class ViewWriter extends Writer {
         return `fetch("${script.body}").then(body => body.text()),`
       }
 
-      return `Promise.resolve("${escape(uglify.minify(script.body).code)}"),`
+      const minified = uglify.minify(script.body).code
+      // Unknown script format ??? fallback to maxified version
+      const code = minified || script.body
+
+      return `Promise.resolve("${escape(code)}"),`
     }).join('\n')
   }
 
