@@ -1,0 +1,17 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:8.11
+
+    working_directory: ~/app
+
+    steps:
+      - checkout
+
+      - run:
+          name: install node deps
+          command: |
+            npm install
+
+      - run: npm run test
