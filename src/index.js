@@ -5,67 +5,66 @@ import { fs, ncp, reread } from './libs'
 import { encapsulateCSS } from './utils'
 import { ViewWriter, ScriptWriter, StyleWriter } from './writers'
 
-export const transpile = async (config) => {
+export const transpile = async config => {
   let inputFiles
   let outputFiles = []
 
-  await Promise.all([
-    fs.readdir(config.input).then((files) => {
-      inputFiles = files
-    }),
-    git.removeAppfairyFiles().then((files) => {
-      outputFiles.push(...files)
-    }),
-  ])
+  try {
+    await Promise.all([
+      fs.readdir(config.input).then(files => {
+        inputFiles = files
+      }),
+      git.removeAppfairyFiles().then(files => {
+        outputFiles.push(...files)
+      })
+    ])
+  } catch (error) {
+    console.error(error)
+  }
 
   const htmlFiles = inputFiles.filter(file => path.extname(file) == '.html')
   const publicSubDirs = inputFiles.filter(file => !path.extname(file))
 
   const scriptWriter = new ScriptWriter({
     baseUrl: config.input,
-    prefetch: config.prefetch,
+    prefetch: config.prefetch
   })
 
   const styleWriter = new StyleWriter({
     baseUrl: config.input,
     prefetch: config.prefetch,
-    source: config.srouce,
+    source: config.source
   })
 
-  const transpilingHTMLFiles = htmlFiles.map((htmlFile) => {
-    return transpileHTMLFile(
-      config,
-      htmlFile,
-      scriptWriter,
-      styleWriter,
-    )
+  const transpilingHTMLFiles = htmlFiles.map(htmlFile => {
+    return transpileHTMLFile(config, htmlFile, scriptWriter, styleWriter)
   })
 
-  const writingFiles = Promise.all(transpilingHTMLFiles).then((viewWriters) => {
-    return Promise.all([
-      ViewWriter.writeAll(
-        viewWriters, config.output.src.views, config.output.src.controllers
-      ).then((paths) => outputFiles.push(...paths)),
-      scriptWriter.write(
-        config.output.src.scripts
-      ).then((paths) => outputFiles.push(...paths)),
-      styleWriter.write(
-        config.output.src.styles
-      ).then((paths) => outputFiles.push(...paths)),
-    ])
-  })
+  const writingFiles = await Promise.all(transpilingHTMLFiles).then(
+    async viewWriters => {
+      return await Promise.all([
+        ViewWriter.writeAll(
+          viewWriters,
+          `${config.output}/src/views`,
+          `${config.output}/src/controllers`
+        ).then(paths => outputFiles.push(...paths)),
+        scriptWriter
+          .write(`${config.output}/src/scripts`)
+          .then(paths => outputFiles.push(...paths)),
+        styleWriter
+          .write(`${config.output}/src/styles`)
+          .then(paths => outputFiles.push(...paths))
+      ])
+    }
+  )
 
-  const makingPublicDir = makePublicDir(
-    config,
-    publicSubDirs,
-  ).then((paths) => outputFiles.push(...paths))
+  const makingPublicDir = makePublicDir(config, publicSubDirs).then(paths =>
+    outputFiles.push(...paths)
+  )
 
-  await Promise.all([
-    writingFiles,
-    makingPublicDir,
-  ])
+  await Promise.all([writingFiles, makingPublicDir])
 
-  return git.add(outputFiles).then((files) => {
+  return git.add(outputFiles).then(files => {
     return git.commit(files, 'Migrate')
   })
 }
@@ -74,7 +73,7 @@ const transpileHTMLFile = async (
   config,
   htmlFile,
   scriptWriter,
-  styleWriter,
+  styleWriter
 ) => {
   const html = (await fs.readFile(`${config.input}/${htmlFile}`)).toString()
   const $ = cheerio.load(html)
@@ -82,9 +81,12 @@ const transpileHTMLFile = async (
   const $body = $('body')
 
   const viewWriter = new ViewWriter({
-    name: htmlFile.split('.').slice(0, -1).join('.'),
+    name: htmlFile
+      .split('.')
+      .slice(0, -1)
+      .join('.'),
     baseUrl: config.baseUrl,
-    source: config.source,
+    source: config.source
   })
 
   setScripts(scriptWriter, $head, $)
@@ -97,30 +99,34 @@ const transpileHTMLFile = async (
 const makePublicDir = async (config, publicSubDirs) => {
   const publicDir = config.output.public
 
-  await Promise.all(publicSubDirs.map((publicSubDir) => {
-    return ncp(
-      `${config.input}/${publicSubDir}`,
-      `${publicDir}/${publicSubDir}`,
-    )
-  }))
+  await Promise.all(
+    publicSubDirs.map(publicSubDir => {
+      return ncp(
+        `${config.input}/${publicSubDir}`,
+        `${publicDir}/${publicSubDir}`
+      )
+    })
+  )
 
   // Resolving relative paths
   const filePaths = await reread(config.input)
 
-  const relativePaths = filePaths.map((filePath) => {
+  const relativePaths = filePaths.map(filePath => {
     const relativePath = path.relative(config.input, filePath)
 
     return `${publicDir}/${relativePath}`
   })
 
   // Encapsulate CSS files
-  await Promise.all(relativePaths.map(async (relativePath) => {
-    if (path.extname(relativePath) != '.css') return
+  await Promise.all(
+    relativePaths.map(async relativePath => {
+      if (path.extname(relativePath) != '.css') return
 
-    let css = (await fs.readFile(relativePath)).toString()
-    css = encapsulateCSS(css, config.source)
-    await fs.writeFile(relativePath, css)
-  }))
+      let css = (await fs.readFile(relativePath)).toString()
+      css = encapsulateCSS(css, config.source)
+      await fs.writeFile(relativePath, css)
+    })
+  )
 
   return relativePaths
 }
