@@ -45,14 +45,14 @@ export const commit = (files, message, stdio = 'inherit') => {
 export const removeAppfairyFiles = async () => {
   const { stdout: diffFiles } = await execa('git', ['diff', '--name-only'])
 
-  // if (diffFiles) {
-  //   throw Error(
-  //     [
-  //       'Cannot transpile: Your index contains uncommitted changes.',
-  //       'Please commit or stash them.'
-  //     ].join('\n')
-  //   )
-  // }
+  if (diffFiles) {
+    throw Error(
+      [
+        'Cannot transpile: Your index contains uncommitted changes.',
+        'Please commit or stash them.'
+      ].join('\n')
+    )
+  }
 
   let { stderr, stdout: hash } = await execa('git', [
     'log',

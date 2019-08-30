@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "webpack --config webpack_config.js",
+    "prepublish": "npm run build",
     "test": "npx mocha --require @babel/register"
   },
   "dependencies": {
@@ -34,6 +35,9 @@
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.5.5",
     "@babel/runtime": "^7.5.5",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.6",
+    "babel-loader": "^8.0.6",
     "eslint": "^5.1.0",
     "eslint-loader": "^2.1.0",
     "mocha": "^6.2.0",
