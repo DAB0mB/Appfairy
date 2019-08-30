@@ -11,34 +11,34 @@ import {
   freeLint,
   freeContext,
   padLeft,
-  requireText,
+  requireText
 } from '../utils'
 
 const _ = Symbol('_ScriptWriter')
 
 @Internal(_)
 class ScriptWriter extends Writer {
-  get scripts() {
+  get scripts () {
     return this[_].scripts.slice()
   }
 
-  get prefetch() {
+  get prefetch () {
     return this[_].prefetch
   }
 
-  set prefetch(prefetch) {
-    return this[_].prefetch = !!prefetch
+  set prefetch (prefetch) {
+    return (this[_].prefetch = !!prefetch)
   }
 
-  get baseUrl() {
+  get baseUrl () {
     return this[_].baseUrl
   }
 
-  set baseUrl(baseUrl) {
+  set baseUrl (baseUrl) {
     this[_].baseUrl = String(baseUrl)
   }
 
-  constructor(options = {}) {
+  constructor (options = {}) {
     super()
 
     this[_].scripts = []
@@ -47,12 +47,12 @@ class ScriptWriter extends Writer {
     this.prefetch = options.prefetch
   }
 
-  async write(dir, options) {
+  async write (dir, options) {
     await mkdirp(dir)
 
     options = {
       ...options,
-      prefetch: this.prefetch,
+      prefetch: this.prefetch
     }
 
     const indexFilePath = `${dir}/index.js`
@@ -74,50 +74,49 @@ class ScriptWriter extends Writer {
     const fetchingScripts = this.scripts.map(async (script, index) => {
       const scriptFileName = scriptFileNames[index]
 
-      let code = script.type == 'code'
-        ? script.body
-        : /^http/.test(script.body)
-        ? await fetch(script.body)
-          .then(res => res.text())
-          .then(text => uglify.minify(text).code)
-        : requireText(`${this.baseUrl}/${script.body}`)
+      let code =
+        script.type == 'code'
+          ? script.body
+          : /^http/.test(script.body)
+            ? await fetch(script.body)
+              .then(res => res.text())
+              .then(text => uglify.minify(text).code)
+            : requireText(`${this.baseUrl}/${script.body}`)
       code = code.replace(/\n\/\/# ?sourceMappingURL=.*\s*$/, '')
       code = freeContext(code)
 
       return fs.writeFile(`${dir}/${scriptFileName}`, code)
     })
 
-    const scriptsIndexContent = scriptFileNames.map((scriptFileName) => {
-      return `import './${scriptFileName}'`
-    }).join('\n')
+    const scriptsIndexContent = scriptFileNames
+      .map(scriptFileName => {
+        return `import './${scriptFileName}'`
+      })
+      .join('\n')
 
     const writingIndex = fs.writeFile(
       indexFilePath,
-      freeLint(scriptsIndexContent),
+      freeLint(scriptsIndexContent)
     )
 
-    await Promise.all([
-      ...fetchingScripts,
-      writingIndex,
-    ])
+    await Promise.all([...fetchingScripts, writingIndex])
 
     return childFilePaths
   }
 
-  setScript(src, content) {
+  setScript (src, content) {
     let type
     let body
 
     if (src) {
       type = 'src'
       body = /^\w+:\/\//.test(src) ? src : path.resolve('/', src)
-    }
-    else {
+    } else {
       type = 'code'
       body = uglify.minify(content).code
     }
 
-    const exists = this[_].scripts.some((script) => {
+    const exists = this[_].scripts.some(script => {
       return script.body == body
     })
 
@@ -126,15 +125,17 @@ class ScriptWriter extends Writer {
     }
   }
 
-  _composeScriptLoader() {
-    const scripts = this[_].scripts.map((script) => {
-      return freeText(`
+  _composeScriptLoader () {
+    const scripts = this[_].scripts
+      .map(script => {
+        return freeText(`
         {
           type: '${script.type}',
           body: '${escape(script.body, "'")}',
         },
       `)
-    }).join('\n')
+      })
+      .join('\n')
 
     return freeLint(`
       const scripts = [

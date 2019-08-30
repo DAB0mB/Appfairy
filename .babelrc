@@ -1,4 +1,4 @@
 {
-  presets: ["es2017", "stage-2"],
-  plugins: ["transform-decorators-legacy"]
+  "presets": ["@babel/preset-env"],
+  "plugins": [["@babel/plugin-proposal-decorators", { "legacy": true }], ["@babel/transform-runtime"]]
 }
