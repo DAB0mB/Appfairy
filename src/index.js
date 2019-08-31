@@ -64,9 +64,9 @@ export const transpile = async config => {
 
   await Promise.all([writingFiles, makingPublicDir])
 
-  return git.add(outputFiles).then(files => {
-    return git.commit(files, 'Migrate')
-  })
+  // return git.add(outputFiles).then(files => {
+  //   return git.commit(files, 'Migrate')
+  // })
 }
 
 const transpileHTMLFile = async (
