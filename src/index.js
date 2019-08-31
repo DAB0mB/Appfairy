@@ -1,6 +1,7 @@
 import cheerio from 'cheerio'
 import path from 'path'
-import git from './git'
+// TODO: TEMPORARY
+// import git from './git'
 import { fs, ncp, reread } from './libs'
 import { encapsulateCSS } from './utils'
 import { ViewWriter, ScriptWriter, StyleWriter } from './writers'
