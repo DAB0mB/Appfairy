@@ -13,10 +13,13 @@ export const transpile = async config => {
     await Promise.all([
       fs.readdir(config.input).then(files => {
         inputFiles = files
-      }),
-      git.removeAppfairyFiles().then(files => {
-        outputFiles.push(...files)
       })
+      // TODO: TEMPORARY
+      // This will be in a conditional checking
+      // a new config.git boolean
+      // git.removeAppfairyFiles().then(files => {
+      //   outputFiles.push(...files)
+      // })
     ])
   } catch (error) {
     console.error(error)
@@ -64,6 +67,9 @@ export const transpile = async config => {
 
   await Promise.all([writingFiles, makingPublicDir])
 
+  // TODO: TEMPORARY
+  // This will be in a conditional checking
+  // a new config.git boolean
   // return git.add(outputFiles).then(files => {
   //   return git.commit(files, 'Migrate')
   // })
