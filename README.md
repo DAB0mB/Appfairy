@@ -1,8 +1,10 @@
-# Appfairy
+# Appfairy (with React Native support!)
 
 <p align="center"><img src="https://user-images.githubusercontent.com/7648874/45173702-8e98e700-b23b-11e8-96c7-2426ab03abe0.png" alt="appfairy"></p>
 
 I'm just tired going through a design and translating it into React components. Appfairy is a CLI tool that does that for you - by running a single command the design will be transpiled into React components. As for now Appfairy works with Webflow only for web React apps, but the near future plans are to have that compatible with Sketch and React Native.
+
+...well...the future is now...for React Native anyway. -)
 
 ## Methodology
 
