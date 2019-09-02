@@ -20,7 +20,6 @@
     "htmltojsx": "^0.3.0",
     "minimist": "^1.2.0",
     "node-fetch": "^2.1.2",
-    "recursive-readdir": "^2.2.2",
     "resolve": "^1.8.1",
     "source-map-support": "^0.5.9",
     "statuses": "^1.5.0",
@@ -41,6 +40,7 @@
     "eslint": "^5.1.0",
     "eslint-loader": "^2.1.0",
     "mocha": "^6.2.0",
+    "recursive-readdir": "^2.2.2",
     "webpack": "^4.16.1",
     "webpack-cli": "^3.1.0",
     "webpack-node-externals": "^1.7.2"

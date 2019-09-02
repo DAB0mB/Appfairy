@@ -1,7 +1,6 @@
 import cheerio from 'cheerio'
 import path from 'path'
-// TODO: TEMPORARY
-// import git from './git'
+import git from './git'
 import { fs, ncp, reread } from './libs'
 import { encapsulateCSS } from './utils'
 import { ViewWriter, ScriptWriter, StyleWriter } from './writers'
@@ -14,13 +13,12 @@ export const transpile = async config => {
     await Promise.all([
       fs.readdir(config.input).then(files => {
         inputFiles = files
-      })
-      // TODO: TEMPORARY
-      // This will be in a conditional checking
-      // a new config.git boolean
-      // git.removeAppfairyFiles().then(files => {
-      //   outputFiles.push(...files)
-      // })
+      }),
+      config.git !== false
+        ? git.removeAppfairyFiles().then(files => {
+          outputFiles.push(...files)
+        })
+        : null
     ])
   } catch (error) {
     console.error(error)
@@ -49,14 +47,14 @@ export const transpile = async config => {
       return await Promise.all([
         ViewWriter.writeAll(
           viewWriters,
-          `${config.output}/src/views`,
-          `${config.output}/src/controllers`
+          `${config.output}/src/views/`,
+          `${config.output}/src/controllers/`
         ).then(paths => outputFiles.push(...paths)),
         scriptWriter
-          .write(`${config.output}/src/scripts`)
+          .write(`${config.output}/src/scripts/`)
           .then(paths => outputFiles.push(...paths)),
         styleWriter
-          .write(`${config.output}/src/styles`)
+          .write(`${config.output}/src/styles/`)
           .then(paths => outputFiles.push(...paths))
       ])
     }
@@ -68,12 +66,11 @@ export const transpile = async config => {
 
   await Promise.all([writingFiles, makingPublicDir])
 
-  // TODO: TEMPORARY
-  // This will be in a conditional checking
-  // a new config.git boolean
-  // return git.add(outputFiles).then(files => {
-  //   return git.commit(files, 'Migrate')
-  // })
+  if (config.git !== false) {
+    return git.add(outputFiles).then(files => {
+      return git.commit(files, 'Migrate')
+    })
+  }
 }
 
 const transpileHTMLFile = async (
@@ -104,7 +101,7 @@ const transpileHTMLFile = async (
 }
 
 const makePublicDir = async (config, publicSubDirs) => {
-  const publicDir = config.output.public
+  const publicDir = `${config.output}`
 
   await Promise.all(
     publicSubDirs.map(publicSubDir => {
