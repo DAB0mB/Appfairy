@@ -361,7 +361,7 @@ class ViewWriter extends Writer {
         }
 
         render() {
-          const proxies = Controller !== ${this.className} ? transformProxies(this.props.children) : {
+          const proxies = ${this.className}.Controller !== ${this.className} ? transformProxies(this.props.children) : {
             ==>${this[_].composeProxiesDefault()}<==
           }
 
