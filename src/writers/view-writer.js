@@ -189,6 +189,7 @@ class ViewWriter extends Writer {
       const $script = $(script)
       const src = $script.attr('src')
       const type = $script.attr('type')
+      const isAsync = !!$script.attr('async')
 
       // We're only interested in JavaScript script tags
       if (type && !/javascript/i.test(type)) return
@@ -197,12 +198,14 @@ class ViewWriter extends Writer {
         this[_].scripts.push({
           type: 'src',
           body: src,
+          isAsync,
         })
       }
       else {
         this[_].scripts.push({
           type: 'code',
           body: $script.html(),
+          isAsync,
         })
       }
 
@@ -424,14 +427,14 @@ class ViewWriter extends Writer {
   _composeScriptsDeclerations() {
     return this[_].scripts.map((script) => {
       if (script.type == 'src') {
-        return `fetch("${script.body}").then(body => body.text()),`
+        return `{ loading: fetch("${script.body}").then(body => body.text()), isAsync: ${!!script.isAsync} },`
       }
 
       const minified = uglify.minify(script.body).code
       // Unknown script format ??? fallback to maxified version
       const code = minified || script.body
 
-      return `Promise.resolve("${escape(code)}"),`
+      return `{ loading: Promise.resolve("${escape(code)}"), isAsync: ${!!script.isAsync} },`
     }).join('\n')
   }
 
@@ -443,13 +446,15 @@ class ViewWriter extends Writer {
     })
 
     return freeText(`
-      scripts.concat(Promise.resolve()).reduce((loaded, loading) => {
-        return loaded.then((script) => {
+      scripts.concat(null).reduce((active, next) => Promise.resolve(active).then((active) => {
+        const loaded = active.loading.then((script) => {
           ==>${invoke}<==
 
-          return loading
+          return next
         })
-      })
+
+        return active.isAsync ? next : loaded
+      }))
     `)
   }
 }

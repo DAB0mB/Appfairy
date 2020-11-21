@@ -104,7 +104,7 @@ class ScriptWriter extends Writer {
     return childFilePaths
   }
 
-  setScript(src, content) {
+  setScript(src, content, { isAsync } = {}) {
     let type
     let body
 
@@ -122,7 +122,7 @@ class ScriptWriter extends Writer {
     })
 
     if (!exists) {
-      this[_].scripts.push({ type, body })
+      this[_].scripts.push({ type, body, isAsync })
     }
   }
 
@@ -132,6 +132,7 @@ class ScriptWriter extends Writer {
         {
           type: '${script.type}',
           body: '${escape(script.body, "'")}',
+          isAsync: ${!!script.isAsync},
         },
       `)
     }).join('\n')
@@ -141,29 +142,31 @@ class ScriptWriter extends Writer {
         ==>${scripts}<==
       ]
 
-      const loadingScripts = scripts.reduce((loaded, script) => loaded.then(() => {
+      const loadingScripts = scripts.concat(null).reduce((active, next) => Promise.resolve(active).then((active) => {
         const scriptEl = document.createElement('script')
         scriptEl.type = 'text/javascript'
-        let loading
+        let loaded
 
-        if (script.type == 'src') {
-          scriptEl.src = script.body
+        if (active.type == 'src') {
+          scriptEl.src = active.body
 
-          loading = new Promise((resolve, reject) => {
+          loaded = new Promise((resolve, reject) => {
             scriptEl.onload = resolve
             scriptEl.onerror = reject
+
+            return next
           })
         }
         else {
-          scriptEl.innerHTML = script.body
+          scriptEl.innerHTML = active.body
 
-          loading = Promise.resolve()
+          loaded = next
         }
 
         document.head.appendChild(scriptEl)
 
-        return loading
-      }), Promise.resolve())
+        return active.isAsync ? next : loaded
+      }))
 
       export default loadingScripts
     `)

@@ -131,7 +131,9 @@ const setScripts = (scriptWriter, $head) => {
   $scripts.each((i, script) => {
     const $script = $head.find(script)
 
-    scriptWriter.setScript($script.attr('src'), $script.html())
+    scriptWriter.setScript($script.attr('src'), $script.html(), {
+      isAsync: !!$script.attr('async'),
+    })
   })
 }
 
