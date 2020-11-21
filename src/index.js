@@ -80,6 +80,7 @@ const transpileHTMLFile = async (
   const $ = cheerio.load(html)
   const $head = $('head')
   const $body = $('body')
+  const dataAttrs = $(':root').data()
 
   const viewWriter = new ViewWriter({
     name: htmlFile.split('.').slice(0, -1).join('.'),
@@ -90,6 +91,7 @@ const transpileHTMLFile = async (
   setScripts(scriptWriter, $head, $)
   setStyles(viewWriter, styleWriter, $head, $)
   setHTML(viewWriter, $body, $)
+  setWfData(viewWriter, dataAttrs)
 
   return viewWriter
 }
@@ -166,4 +168,8 @@ const setHTML = (viewWriter, $body, $) => {
   $div.html($body.html())
   $div.attr($body.attr())
   viewWriter.html = $.html($div)
+}
+
+const setWfData = (viewWriter, dataAttrs) => {
+  viewWriter.wfData = dataAttrs
 }

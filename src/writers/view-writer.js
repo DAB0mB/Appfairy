@@ -247,6 +247,16 @@ class ViewWriter extends Writer {
     this[_].jsx = bindJSX(jsx, children)
   }
 
+  set wfData(dataAttrs) {
+    const wfData = this[_].wfData = new Map()
+
+    for (let [key, value] of Object.entries(dataAttrs)) {
+      if (/^wf/.test(key)) {
+        wfData.set(key, value)
+      }
+    }
+  }
+
   get scripts() {
     return this[_].scripts ? this[_].scripts.slice() : []
   }
@@ -257,6 +267,10 @@ class ViewWriter extends Writer {
 
   get html() {
     return this[_].html
+  }
+
+  get wfData() {
+    return this[_].wfData
   }
 
   get jsx() {
@@ -360,6 +374,8 @@ class ViewWriter extends Writer {
         }
 
         componentDidMount() {
+          ==>${this[_].composeWfDataAttrs()}<==
+
           ==>${this[_].composeScriptsInvocations()}<==
         }
 
@@ -438,6 +454,22 @@ class ViewWriter extends Writer {
     }).join('\n')
   }
 
+  _composeWfDataAttrs() {
+    if (!this[_].wfData.size) {
+      return '/* View has no WebFlow data attributes */'
+    }
+
+    const lines = [
+      "const htmlEl = document.querySelector('html')",
+    ]
+
+    for (let [attr, value] of this[_].wfData) {
+      lines.push(`htmlEl.dataset['${attr}'] = '${value}'`)
+    }
+
+    return lines.join('\n')
+  }
+
   _composeScriptsInvocations() {
     if (!this[_].scripts) return ''
 
@@ -447,13 +479,13 @@ class ViewWriter extends Writer {
 
     return freeText(`
       scripts.concat(null).reduce((active, next) => Promise.resolve(active).then((active) => {
-        const loaded = active.loading.then((script) => {
+        const loading = active.loading.then((script) => {
           ==>${invoke}<==
 
           return next
         })
 
-        return active.isAsync ? next : loaded
+        return active.isAsync ? next : loading
       }))
     `)
   }

@@ -145,12 +145,12 @@ class ScriptWriter extends Writer {
       const loadingScripts = scripts.concat(null).reduce((active, next) => Promise.resolve(active).then((active) => {
         const scriptEl = document.createElement('script')
         scriptEl.type = 'text/javascript'
-        let loaded
+        let loading
 
         if (active.type == 'src') {
           scriptEl.src = active.body
 
-          loaded = new Promise((resolve, reject) => {
+          loading = new Promise((resolve, reject) => {
             scriptEl.onload = resolve
             scriptEl.onerror = reject
 
@@ -160,12 +160,12 @@ class ScriptWriter extends Writer {
         else {
           scriptEl.innerHTML = active.body
 
-          loaded = next
+          loading = next
         }
 
         document.head.appendChild(scriptEl)
 
-        return active.isAsync ? next : loaded
+        return active.isAsync ? next : loading
       }))
 
       export default loadingScripts
