@@ -1,6 +1,7 @@
 import fetch from 'node-fetch'
 import path from 'path'
 import uglify from 'uglify-js'
+import patches from '../patches'
 import { fs, mkdirp } from '../libs'
 import Writer from './writer'
 
@@ -41,7 +42,13 @@ class ScriptWriter extends Writer {
   constructor(options = {}) {
     super()
 
-    this[_].scripts = []
+    this[_].scripts = [
+      {
+        type: 'code',
+        body: patches.webflow,
+        isAsync: false,
+      }
+    ]
 
     this.baseUrl = options.baseUrl
     this.prefetch = options.prefetch

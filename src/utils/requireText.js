@@ -3,10 +3,10 @@ import resolvePath from 'resolve'
 
 const cache = {}
 
-const requireText = (path) => {
+const requireText = (path, transform = x => x) => {
   path = resolvePath.sync(path)
 
-  return cache[path] = cache[path] || readFileSync(path).toString()
+  return cache[path] = cache[path] || transform(readFileSync(path).toString())
 }
 
 requireText.promise = (path) => new Promise((resolve, reject) => {
