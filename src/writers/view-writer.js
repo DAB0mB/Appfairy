@@ -248,11 +248,9 @@ class ViewWriter extends Writer {
   }
 
   set wfData(dataAttrs) {
-    const wfData = this[_].wfData = new Map()
-
     for (let [key, value] of Object.entries(dataAttrs)) {
       if (/^wf/.test(key)) {
-        wfData.set(key, value)
+        this[_].wfData.set(key, value)
       }
     }
   }
@@ -294,6 +292,7 @@ class ViewWriter extends Writer {
 
     this[_].children = []
     this[_].styles = options.styles || []
+    this[_].wfData = new Map()
 
     this.name = options.name
     this.html = options.html

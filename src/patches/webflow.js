@@ -14,7 +14,7 @@ window.__defineSetter__('Webflow', (Webflow) => {
   }
 
   Webflow.require = (name) => {
-    const module = superRequire(name)
+    const module = Object.assign({}, superRequire(name))
 
     if (/^ix2?$/.test(name)) {
       const superInit = module.init
