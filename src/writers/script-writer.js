@@ -157,11 +157,9 @@ class ScriptWriter extends Writer {
         if (active.type == 'src') {
           scriptEl.src = active.body
 
-          loading = new Promise((resolve, reject) => {
-            scriptEl.onload = resolve
-            scriptEl.onerror = reject
-
-            return next
+          loading = new Promise((resolve) => {
+            scriptEl.onload = () => resolve(next)
+            scriptEl.onerror = () => resolve(next)
           })
         }
         else {
